@@ -262,11 +262,11 @@ function AutoPilot:Control(args) -- Subscribed to LocalPlayerChat
 		
 	if text1 == "/ah" and text2 and not n then
 		Chat:Print("Please enter a valid number from 0 to 5000", self.msg_color)
-	elseif text1 == "/ah" and (n >= 1 and n <= 5000) then
+	elseif text1 == "/ah" and (n >= 0 and n <= 5000) then
 		self.settings[5][3] = n
 		Chat:Print("Altitude-hold set to "..self.settings[5][3]..self.settings[5][4], self.msg_color)
-	elseif text1 == "/ah" and (n < 1 or n > 500) then
-		Chat:Print("Please enter a valid number from 1 to 360", self.msg_color)
+	elseif text1 == "/ah" and (n < 0 or n > 5000) then
+		Chat:Print("Please enter a valid number from 0 to 5000", self.msg_color)
 		return false
 	end
 	
