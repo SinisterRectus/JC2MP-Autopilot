@@ -54,6 +54,7 @@ function AutoPilot:__init()
 	
 	Events:Subscribe("LocalPlayerChat", self, self.Control)
 	Events:Subscribe("Render", self, self.HUD)
+	Events:Subscribe("PreTick", self, self.PanelAvailable)
 	Events:Subscribe("InputPoll", self, self.RollHold)
 	Events:Subscribe("InputPoll", self, self.PitchHold)
 	Events:Subscribe("InputPoll", self, self.HeadingHold)
@@ -122,7 +123,7 @@ function AutoPilot:GetAirSpeed()
 
 end
 
-function AutoPilot:PanelAvailable()
+function AutoPilot:PanelAvailable() -- Subscribed to PreTick
 
 	if LocalPlayer:InVehicle() then
 		local v = LocalPlayer:GetVehicle()
