@@ -44,7 +44,7 @@ function AutoPilot:__init()
 	self.altitude_mod = 0.3 -- Default 0.3
 	self.throttle_mod = 0.05 -- Default 0.05
 	
-	self.max_power = 1.0 -- Global maximum input power, default 1.0
+	self.max_power = 0.8 -- Global maximum input power
 	
 	-- Lower modifier settings provide weaker inputs
 	-- Optimizing these for each plane may be worth the effort
