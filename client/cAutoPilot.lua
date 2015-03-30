@@ -127,9 +127,7 @@ function AutoPilot:Control(args) -- Subscribed to LocalPlayerChat
 
 	local text1 = args.text:split(" ")[1]
 	local text2 = args.text:split(" ")[2]
-	local text3 = args.text:split(" ")[3]
 	local n = tonumber(text2)
-	local m = tonumber(text3)
 
 	if text1 == "/ap" then
 		if not AutoPilot:PanelAvailable() then
