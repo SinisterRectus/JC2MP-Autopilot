@@ -44,6 +44,8 @@ function AutoPilot:__init()
 	self.altitude_mod = 1.0 -- Default 1.0
 	self.throttle_mod = 0.05 -- Default 0.05
 	
+	self.max_power = 1.0 -- Global maximum input power
+	
 	-- Lower modifier settings provide weaker inputs
 	-- Optimizing these for each plane may be worth the effort
 	
@@ -364,7 +366,7 @@ function AutoPilot:RollHold() -- Subscribed to InputPoll
 	roll = AutoPilot:GetRoll()
 	
 	local power = math.abs(roll - self.settings[2][3]) * self.roll_mod
-	if power > 1 then power = 1 end
+	if power > self.max_power then power = self.max_power end
 	
 	if self.settings[2][3] <  roll then
 		Input:SetValue(Action.PlaneTurnRight, power)
@@ -383,7 +385,7 @@ function AutoPilot:PitchHold() -- Subscribed to InputPoll
 	local pitch = AutoPilot:GetPitch()
 	
 	local power = math.abs(pitch - self.settings[3][3]) * self.pitch_mod
-	if power > 1 then power = 1 end
+	if power > self.max_power then power = self.max_power end
 	
 	if self.settings[3][3] > pitch then
 		Input:SetValue(Action.PlanePitchUp, power)
@@ -435,7 +437,7 @@ function AutoPilot:ThrottleHold() -- Subscribed to InputPoll
 	local air_speed = AutoPilot:GetAirSpeed()
 	
 	local power = math.abs(air_speed - self.settings[6][3]) * self.throttle_mod
-	if power > 1 then power = 1 end
+	if power > self.max_power then power = self.max_power end
 	
 	if air_speed < self.settings[6][3] then
 		Input:SetValue(Action.PlaneIncTrust, power)
