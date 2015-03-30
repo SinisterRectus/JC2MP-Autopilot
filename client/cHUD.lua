@@ -27,7 +27,7 @@ function HUD:__init()
 	self.speed_units = {}
 	self.speed_units[1] = {" m/s", 1}
 	self.speed_units[2] = {" km/h", 3.6}
-	self.speed_units[3] = {" mph", 2.237 }
+	self.speed_units[3] = {" mph", 2.237}
 	self.speed_units[4] = {" ft/s", 3.281}
 	self.speed_units[5] = {" kts", 1.944}
 	
@@ -38,12 +38,12 @@ function HUD:__init()
 	self.air_speed_units = 2
 	self.ground_speed_units = 2
 	self.vertical_speed_units = 2
+	
 	self.altitude_units = 1
 	self.xcoord_units = 1
 	self.ycoord_units = 1
 	
 	Events:Subscribe("Render", self, self.Draw)
-	Events:Subscribe("PreTick", self, self.PanelAvailable)
 	Events:Subscribe("ResolutionChange", self, self.ResolutionChange)
 	
 end
@@ -51,6 +51,18 @@ end
 function math.int(n)
 
 	return math.floor(n + 0.5)
+	
+end
+
+function HUD:PanelAvailable()
+
+	if LocalPlayer:InVehicle() then
+		local v = LocalPlayer:GetVehicle()
+		if self.plane[v:GetModelId()] then
+			return true
+		end
+	end
+	return false
 	
 end
 
@@ -108,18 +120,6 @@ function HUD:Draw() -- Subscribed to Render
 	Render:DrawText(column3_position, roll_string, self.color, self.size)
 	Render:DrawText(column3_position + Vector2(0, self.size * 1), pitch_string, self.color, self.size)
 	Render:DrawText(column3_position + Vector2(0, self.size * 2), heading_string, self.color, self.size)
-	
-end
-
-function HUD:PanelAvailable() -- Subscribed to PreTick
-
-	if LocalPlayer:InVehicle() then
-		local v = LocalPlayer:GetVehicle()
-		if self.plane[v:GetModelId()] then
-			return true
-		end
-	end
-	return false
 	
 end
 	
