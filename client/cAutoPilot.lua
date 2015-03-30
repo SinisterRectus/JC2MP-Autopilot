@@ -54,7 +54,6 @@ function AutoPilot:__init()
 	
 	Events:Subscribe("LocalPlayerChat", self, self.Control)
 	Events:Subscribe("Render", self, self.HUD)
-	Events:Subscribe("PreTick", self, self.PanelAvailable)
 	Events:Subscribe("InputPoll", self, self.RollHold)
 	Events:Subscribe("InputPoll", self, self.PitchHold)
 	Events:Subscribe("InputPoll", self, self.HeadingHold)
@@ -121,6 +120,19 @@ function AutoPilot:GetAirSpeed()
 	local v = LocalPlayer:GetVehicle()
 	return v:GetLinearVelocity():Length() * 3.6
 
+end
+
+function AutoPilot:PanelAvailable()
+
+	if LocalPlayer:InVehicle() then
+		local v = LocalPlayer:GetVehicle()
+		if LocalPlayer == v:GetDriver() and self.plane[v:GetModelId()] then
+			return true
+		end
+	end
+	AutoPilot:Off()
+	return false
+	
 end
 
 function AutoPilot:Control(args) -- Subscribed to LocalPlayerChat
@@ -341,19 +353,6 @@ function AutoPilot:HUD() -- Subscribed to Render
 			position.y = position.y + Render:GetTextHeight(k[1], self.hud_size)
 		end
 	end
-	
-end
-
-function AutoPilot:PanelAvailable() -- Subscribed to PreTick
-
-	if LocalPlayer:InVehicle() then
-		local v = LocalPlayer:GetVehicle()
-		if LocalPlayer == v:GetDriver() and self.plane[v:GetModelId()] then
-			return true
-		end
-	end
-	AutoPilot:Off()
-	return false
 	
 end
 
