@@ -39,7 +39,7 @@ function SetWaypoint:Control(args) -- Subscribed to LocalPlayerChat
 		elseif not tonumber(y_string) then
 			if string.find(y_string, "k") then
 				if string.sub(y_string, string.find(x_string, "k") + 1) == "" then
-					m = tonumber(x_string:split("k")[1]) * 1000
+					m = tonumber(y_string:split("k")[1]) * 1000
 				end
 			end
 		end	
