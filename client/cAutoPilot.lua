@@ -1,4 +1,4 @@
--- Written by Sinister Rectus - http://steamcommunity.com/id/SinisterRectus
+-- Written by Sinister Rectus - http://www.jc-mp.com/forums/index.php?action=profile;u=73431
 
 class 'AutoPilot'
 
