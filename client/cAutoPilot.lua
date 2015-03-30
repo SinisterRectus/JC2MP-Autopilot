@@ -1,4 +1,4 @@
--- Written by Sinister Rectus - http://www.jc-mp.com/forums/index.php?action=profile;u=73431
+-- Written by Sinister Rectus
 
 class 'AutoPilot'
 
@@ -41,7 +41,7 @@ function AutoPilot:__init()
 	self.roll_mod = 0.125 -- Default 0.125
 	self.pitch_mod = 0.5 -- Default 0.5
 	self.heading_mod = 2.0 -- Default 2.0
-	self.altitude_mod = 1.0 -- Default 1.0
+	self.altitude_mod = 0.4 -- Default 0.4
 	self.throttle_mod = 0.05 -- Default 0.05
 	
 	self.max_power = 1.0 -- Global maximum input power
@@ -101,7 +101,7 @@ function AutoPilot:GetHeading()
 	local angle = v:GetAngle()
 	local heading = -math.deg(angle.yaw)
 	
-	if heading < 0 then
+	if heading <= 0 then
 		heading = heading + 360
 	end
 	
@@ -123,24 +123,14 @@ function AutoPilot:GetAirSpeed()
 
 end
 
-function AutoPilot:PanelAvailable() -- Subscribed to PreTick
-
-	if LocalPlayer:InVehicle() then
-		local v = LocalPlayer:GetVehicle()
-		if LocalPlayer == v:GetDriver() and self.plane[v:GetModelId()] then
-			return true
-		end
-	end
-	AutoPilot:Off()
-	return false
-	
-end
-
 function AutoPilot:Control(args) -- Subscribed to LocalPlayerChat
 
 	local text1 = args.text:split(" ")[1]
 	local text2 = args.text:split(" ")[2]
+	local text3 = args.text:split(" ")[3]
 	local n = tonumber(text2)
+	
+	if text3 then return false end
 
 	if text1 == "/ap" then
 		if not AutoPilot:PanelAvailable() then
@@ -248,7 +238,7 @@ function AutoPilot:Control(args) -- Subscribed to LocalPlayerChat
 		Chat:Print("Please enter a valid number from 0 to 360", self.msg_color)
 	elseif text1 == "/hh" and (n >= 0 and n <= 360) then
 		self.settings[4][3] = n
-		Chat:Print("Pitch-hold set to "..self.settings[4][3]..self.settings[4][4], self.msg_color)
+		Chat:Print("Heading-hold set to "..self.settings[4][3]..self.settings[4][4], self.msg_color)
 	elseif text1 == "/hh" and (n < 0 or n > 360) then
 		Chat:Print("Please enter a valid number from 0 to 360", self.msg_color)
 		return false
@@ -357,6 +347,19 @@ function AutoPilot:HUD() -- Subscribed to Render
 	
 end
 
+function AutoPilot:PanelAvailable() -- Subscribed to PreTick
+
+	if LocalPlayer:InVehicle() then
+		local v = LocalPlayer:GetVehicle()
+		if LocalPlayer == v:GetDriver() and self.plane[v:GetModelId()] then
+			return true
+		end
+	end
+	AutoPilot:Off()
+	return false
+	
+end
+
 function AutoPilot:RollHold() -- Subscribed to InputPoll
 
 	if Game:GetState() ~= GUIState.Game or not LocalPlayer:InVehicle() or not self.settings[2][2] then return false end
@@ -381,16 +384,29 @@ function AutoPilot:PitchHold() -- Subscribed to InputPoll
 	if Game:GetState() ~= GUIState.Game or not LocalPlayer:InVehicle() or not self.settings[3][2] then return false end
 	
 	local pitch = AutoPilot:GetPitch()
+	local roll = AutoPilot:GetRoll()
 	
 	local power = math.abs(pitch - self.settings[3][3]) * self.pitch_mod
 	if power > self.max_power then power = self.max_power end
 	
-	if self.settings[3][3] > pitch then
-		Input:SetValue(Action.PlanePitchUp, power)
+	if math.abs(roll) < 90 then
+		if self.settings[3][3] > pitch then
+			Input:SetValue(Action.PlanePitchUp, power)
+		end
+		
+		if self.settings[3][3] < pitch then
+			Input:SetValue(Action.PlanePitchDown, power)
+		end
 	end
 	
-	if self.settings[3][3] < pitch then
-		Input:SetValue(Action.PlanePitchDown, power)
+	if math.abs(roll) >= 90 then
+		if self.settings[3][3] > pitch then
+			Input:SetValue(Action.PlanePitchDown, power)
+		end
+		
+		if self.settings[3][3] < pitch then
+			Input:SetValue(Action.PlanePitchUp, power)
+		end
 	end
 	
 end
@@ -401,10 +417,10 @@ function AutoPilot:HeadingHold() -- Subscribed to InputPoll
 
 	diff = self.settings[4][3] - AutoPilot:GetHeading()
 	
-	if diff > 0 and diff < 180 then self.settings[2][3] = -diff * self.heading_mod end
+	if diff >= 0 and diff < 180 then self.settings[2][3] = -diff * self.heading_mod end
 	if diff > 180 then self.settings[2][3] = diff * self.heading_mod  end
 	if diff < -180 then self.settings[2][3] = diff * self.heading_mod  end
-	if diff < 0 and diff > -180 then self.settings[2][3] = -diff * self.heading_mod end
+	if diff <= 0 and diff > -180 then self.settings[2][3] = -diff * self.heading_mod end
 	
 	if self.settings[2][3] > self.roll_limit then
 		self.settings[2][3] = self.roll_limit
@@ -425,7 +441,7 @@ function AutoPilot:AltitudeHold() -- Subscribed to InputPoll
 	elseif self.settings[3][3] < -self.pitch_limit then
 		self.settings[3][3] = -self.pitch_limit
 	end
-
+	
 end
 
 function AutoPilot:ThrottleHold() -- Subscribed to InputPoll
