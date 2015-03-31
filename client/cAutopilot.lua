@@ -5,17 +5,27 @@ class 'Autopilot'
 function Autopilot:__init()
 
 	self.plane = {}
-	self.plane[24] = true -- F-33 DragonFly
-	self.plane[30] = true -- Si-47 Leopard
-	self.plane[34] = true -- G9 Eclipse
-	self.plane[39] = true -- Aeroliner 474
-	self.plane[51] = true -- Cassius 192
-	self.plane[59] = false -- Peek Airhawk 225
-	self.plane[81] = true -- Pell Silverbolt 6
-	self.plane[85] = true -- Bering I-86DP
+	self.plane[24] = {true, 296, 406, "tbd", "tbd", 5000} -- F-33 DragonFly
+	self.plane[30] = {true, 277, 340, "tbd", "tbd", 5000} -- Si-47 Leopard
+	self.plane[34] = {true, 341, 401, "tbd", "tbd", 20000} -- G9 Eclipse
+	self.plane[39] = {true, 324, 352, "tbd", "tbd", 100000} -- Aeroliner 474
+	self.plane[51] = {true, 250, 314, "tbd", "tbd", 12500} -- Cassius 192
+	self.plane[59] = {false, 207, 242, "tbd", "tbd", 1500} -- Peek Airhawk 225
+	self.plane[81] = {true, 262, 343, "tbd", "tbd", 1500} -- Pell Silverbolt 6 (not upgraded)
+	self.plane[85] = {true, 313, 339, "tbd", "tbd", 100000} -- Bering I-86DP
 	
-	-- Booleans determine autopilot availability
-	-- By default, autopilot is made not available in the Peek Airhawk 225.
+	-- Values from left to right are:
+		-- Autopilot availability
+		-- Approximate air speeds in km/h at:
+			-- Level flight and neutral thrust in k/m
+			-- Level flight and full thrust in km/h
+			-- 45 deg up flight and neutral thrust in k/m
+			-- 45 deg up flight and full thrust in km/h
+			-- 45 deg down flight and neutral thrust in k/m
+			-- 45 deg down flight and full thrust in km/h
+		-- Default mass 
+		
+	-- By default, autopilot is made not available in the Peek Airhawk 225
 	
 	self.hud_on_color = Color(255, 128, 0)
 	self.hud_off_color = Color(255, 255, 255)
