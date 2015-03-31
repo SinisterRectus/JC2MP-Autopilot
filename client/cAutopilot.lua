@@ -93,16 +93,10 @@ function Autopilot:GetPitch(v)
 
 end
 
-function Autopilot:GetHeading(v)
+function Autopilot:GetYaw(v)
 
 	local angle = v:GetAngle()
-	local heading = -math.deg(angle.yaw)
-	
-	if heading <= 0 then
-		heading = heading + 360
-	end
-	
-	return heading
+	return = math.deg(angle.yaw)
 	
 end
 
@@ -415,8 +409,14 @@ function Autopilot:HeadingHold() -- Subscribed to InputPoll
 	if Game:GetState() ~= GUIState.Game or not LocalPlayer:InVehicle() or not self.settings[4][2] then return false end
 	
 	local v = LocalPlayer:GetVehicle()
-
-	diff = self.settings[4][3] - Autopilot:GetHeading(v)
+	
+	local heading = -Autopilot:GetYaw(v)
+	
+	if heading <= 0 then
+		heading = heading + 360
+	end
+	
+	diff = self.settings[4][3] - heading
 	
 	if diff >= 0 and diff < 180 then self.settings[2][3] = -diff * self.heading_mod end
 	if diff > 180 then self.settings[2][3] = diff * self.heading_mod  end
