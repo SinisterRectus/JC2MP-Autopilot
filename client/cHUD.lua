@@ -27,7 +27,7 @@ function HUD:__init()
 	self.speed_units = {}
 	self.speed_units[1] = {" m/s", 1}
 	self.speed_units[2] = {" km/h", 3.6}
-	self.speed_units[3] = {" mph", 2.237}
+	self.speed_units[3] = {" mph", 2.237 }
 	self.speed_units[4] = {" ft/s", 3.281}
 	self.speed_units[5] = {" kts", 1.944}
 	
@@ -38,7 +38,6 @@ function HUD:__init()
 	self.air_speed_units = 2
 	self.ground_speed_units = 2
 	self.vertical_speed_units = 2
-	
 	self.altitude_units = 1
 	self.xcoord_units = 1
 	self.ycoord_units = 1
@@ -51,18 +50,6 @@ end
 function math.int(n)
 
 	return math.floor(n + 0.5)
-	
-end
-
-function HUD:PanelAvailable()
-
-	if LocalPlayer:InVehicle() then
-		local v = LocalPlayer:GetVehicle()
-		if self.plane[v:GetModelId()] then
-			return true
-		end
-	end
-	return false
 	
 end
 
@@ -88,38 +75,51 @@ function HUD:Draw() -- Subscribed to Render
 	
 	local vpos = v:GetPosition()
 	local altitude = (vpos.y - 200) * self.distance_units[self.altitude_units][2]
+	local terrain_height = math.max((Physics:GetTerrainHeight(vpos) * self.distance_units[self.altitude_units][2] - 200), 0)
 	local xcoord = (vpos.x + 16384) * self.distance_units[self.xcoord_units][2]
 	local ycoord = (vpos.z + 16384) * self.distance_units[self.ycoord_units][2]
-	local terrain_height = (Physics:GetTerrainHeight(vpos) * self.distance_units[self.altitude_units][2] - 200)
-	if terrain_height < 0 then terrain_height = 0 end
 	
-	local altitude_string = "SL Alt: "..tostring(math.int(altitude))..self.distance_units[self.altitude_units][1]
-	local height_string = "GL Alt: "..tostring(math.int(altitude - terrain_height))..self.distance_units[self.altitude_units][1]
+	local sealevel_alt_string = "SL Alt: "..tostring(math.int(altitude))..self.distance_units[self.altitude_units][1]
+	local groundlevel_alt_string = "GL Alt: "..tostring(math.int(altitude - terrain_height))..self.distance_units[self.altitude_units][1]
 	local xcoord_string = "X-Coord: "..tostring(math.int(xcoord))..self.distance_units[self.xcoord_units][1]
 	local ycoord_string = "Y-Coord: "..tostring(math.int(ycoord))..self.distance_units[self.ycoord_units][1]
 	
 	local column2_position = Vector2(self.position.x + 14 * self.size, self.position.y)
 	
-	Render:DrawText(column2_position, altitude_string, self.color, self.size)
-	Render:DrawText(column2_position + Vector2(0, self.size * 1), height_string, self.color, self.size)
+	Render:DrawText(column2_position, sealevel_alt_string, self.color, self.size)
+	Render:DrawText(column2_position + Vector2(0, self.size * 1), groundlevel_alt_string, self.color, self.size)
 	Render:DrawText(column2_position + Vector2(0, self.size * 2), xcoord_string, self.color, self.size)
 	Render:DrawText(column2_position + Vector2(0, self.size * 3), ycoord_string, self.color, self.size)
 
 	local heading = -math.deg(angle.yaw)
 	
-	if heading < 0 then
+	if heading <= 0 then
 		heading = heading + 360
 	end
 	
-	local roll_string = "Bank Angle: "..tostring(math.int(math.deg(angle.roll))).."°"
-	local pitch_string = "Angle of Attack: "..tostring(math.int(math.deg(angle.pitch))).."°"
+	local roll_string = "Roll: "..tostring(math.int(math.deg(angle.roll))).."°"
+	local pitch_string = "Pitch: "..tostring(math.int(math.deg(angle.pitch))).."°"
+	local yaw_string = "Yaw: "..tostring(math.int(math.deg(angle.yaw))).."°"
 	local heading_string = "Heading: "..tostring(math.int(heading)).."°"
 	
 	local column3_position = Vector2(self.position.x + 25 * self.size, self.position.y)
 	
 	Render:DrawText(column3_position, roll_string, self.color, self.size)
 	Render:DrawText(column3_position + Vector2(0, self.size * 1), pitch_string, self.color, self.size)
-	Render:DrawText(column3_position + Vector2(0, self.size * 2), heading_string, self.color, self.size)
+	Render:DrawText(column3_position + Vector2(0, self.size * 2), yaw_string, self.color, self.size)
+	Render:DrawText(column3_position + Vector2(0, self.size * 3), heading_string, self.color, self.size)
+	
+end
+
+function HUD:PanelAvailable()
+
+	if LocalPlayer:InVehicle() then
+		local v = LocalPlayer:GetVehicle()
+		if self.plane[v:GetModelId()] then
+			return true
+		end
+	end
+	return false
 	
 end
 	
