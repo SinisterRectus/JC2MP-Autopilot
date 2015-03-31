@@ -1,4 +1,4 @@
--- Written by Sinister Rectus
+v-- Written by Sinister Rectus
 
 class 'Autopilot'
 
@@ -350,7 +350,7 @@ function Autopilot:RollHold() -- Subscribed to InputPoll
 	
 	local roll = Autopilot:GetRoll(v)
 	
-	local power = math.abs(roll - self.settings[2][3]) * self.roll_mod, self.max_power
+	local power = math.abs(roll - self.settings[2][3]) * self.roll_mod
 	if power > self.max_power then power = self.max_power end
 	
 	if self.settings[2][3] <  roll then
@@ -468,10 +468,10 @@ function Autopilot:WaypointHold() -- Subscribed to InputPoll
 	local position = v:GetPosition()
 	local waypoint = Waypoint:GetPosition()
 	local heading
-	diffx = position.x - waypoint.x
-	diffy = position.z - waypoint.z
+	local diffx = position.x - waypoint.x
+	local diffy = position.z - waypoint.z
 	
-	angle = math.atan(diffx / diffy)
+	local angle = math.atan(diffx / diffy)
 	
 	if diffx > 0 and diffy > 0 then
 		heading  = 360 - math.deg(angle)
