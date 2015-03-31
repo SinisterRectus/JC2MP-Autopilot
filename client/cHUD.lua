@@ -12,7 +12,7 @@ function HUD:__init()
 	self.plane[51] = true -- Cassius 192
 	self.plane[59] = true -- Peek Airhawk 225
 	self.plane[81] = true -- Pell Silverbolt 6
-	self.plane[85] = true -- Bering I-86DP
+	self.plane[85] = true -- Bering I-86DP 
 	
 	self.color = Color(255, 255, 255)
 	self.msg_color = Color(192, 192, 192)
@@ -60,8 +60,8 @@ function HUD:Draw() -- Subscribed to Render
 	local angle = v:GetAngle()
 	
 	local air_speed = v:GetLinearVelocity():Length() * self.speed_units[self.air_speed_units][2]
-	local ground_speed = v:GetLinearVelocity():Length() * self.speed_units[self.ground_speed_units][2] * math.cos(angle.pitch)
-	local vertical_speed = v:GetLinearVelocity():Length() * self.speed_units[self.vertical_speed_units][2] * math.sin(angle.pitch)
+	local ground_speed = Vector2(v:GetLinearVelocity().x, v:GetLinearVelocity().z):Length() * self.speed_units[self.ground_speed_units][2]
+	local vertical_speed = v:GetLinearVelocity().y * self.speed_units[self.vertical_speed_units][2]
 	
 	local air_speed_string = "Air Speed: "..tostring(math.int(air_speed))..self.speed_units[self.air_speed_units][1]
 	local ground_speed_string = "Ground Speed: "..tostring(math.int(ground_speed))..self.speed_units[self.ground_speed_units][1]
