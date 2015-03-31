@@ -1,8 +1,9 @@
--- Written by Sinister Rectus
+-- Written by Sinister Rectus - http://www.jc-mp.com/forums/index.php?action=profile;u=73431
 
 class 'SetWaypoint'
 
--- Set waypoint using format: /sw # #, where # = # or #k
+-- Set waypoint using format: /sw # #
+-- #k is accepted (Ex: 25.4k returns 25400)
 -- Clear waypoint using format: /cw
 
 function SetWaypoint:__init()
