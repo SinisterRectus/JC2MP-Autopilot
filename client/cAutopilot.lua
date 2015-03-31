@@ -17,12 +17,12 @@ function Autopilot:__init()
 	-- Values from left to right are:
 		-- Autopilot availability
 		-- Approximate air speeds in km/h at:
-			-- Level flight and neutral thrust in k/m
-			-- Level flight and full thrust in km/h
-			-- 45 deg up flight and neutral thrust in k/m
-			-- 45 deg up flight and full thrust in km/h
-			-- 45 deg down flight and neutral thrust in k/m
-			-- 45 deg down flight and full thrust in km/h
+			-- Level flight and neutral thrust
+			-- Level flight and full thrust
+			-- 45 deg up flight and neutral thrust
+			-- 45 deg up flight and full thrust
+			-- 45 deg down flight and neutral thrust
+			-- 45 deg down flight and full thrust
 		-- Default mass 
 		
 	-- By default, autopilot is made not available in the Peek Airhawk 225
