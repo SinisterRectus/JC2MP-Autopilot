@@ -66,50 +66,33 @@ function Autopilot:__init()
 end
 
 function Autopilot:On()
-
 	self.settings[1][2] = true
-	
 end
 
 function Autopilot:Off()
-
 	for i,k in ipairs(self.settings) do
 		self.settings[i][2] = false
 	end
-	
 end
 
 function Autopilot:GetRoll(v)
-	
-	local angle = v:GetAngle()
-	return math.deg(angle.roll)
-
+	return math.deg(v:GetAngle().roll)
 end
 
 function Autopilot:GetPitch(v)
-
-	local angle = v:GetAngle()
-	return math.deg(angle.pitch)
-
+	return math.deg(v:GetAngle().pitch)
 end
 
 function Autopilot:GetYaw(v)
-
-	local angle = v:GetAngle()
-	return = math.deg(angle.yaw)
-	
+	return math.deg(v:GetAngle().yaw)
 end
 
 function Autopilot:GetAltitude(v)
-
-	return v:GetPosition().y - 200
-	
+	return v:GetPosition().y - 200	
 end
 
 function Autopilot:GetAirSpeed(v)
-
 	return v:GetLinearVelocity():Length() * 3.6
-
 end
 
 function Autopilot:Control(args) -- Subscribed to LocalPlayerChat
@@ -161,12 +144,14 @@ function Autopilot:Control(args) -- Subscribed to LocalPlayerChat
 		
 	if text1 == "/rh" and text2 and not n then
 		Chat:Print("Please enter a valid number from -90 to 90", self.msg_color)
-	elseif text1 == "/rh" and (n >= -90 and n <= 90) then
-		self.settings[2][3] = n
-		Chat:Print("Roll-hold set to "..self.settings[2][3]..self.settings[2][4], self.msg_color)
-	elseif text1 == "/rh" and (n < -90 or n > 90) then
-		Chat:Print("Please enter a valid number from -90 to 90", self.msg_color)
-		return false
+	elseif text1 == "/rh" and n then
+		if n >= -90 and n <= 90 then
+			self.settings[2][3] = n
+			Chat:Print("Roll-hold set to "..self.settings[2][3]..self.settings[2][4], self.msg_color)
+		elseif n < -90 or n > 90 then
+			Chat:Print("Please enter a valid number from -90 to 90", self.msg_color)
+		end
+	return false
 	end
 	
 	if text1 == "/ph" and not text2 then
@@ -192,12 +177,14 @@ function Autopilot:Control(args) -- Subscribed to LocalPlayerChat
 		
 	if text1 == "/ph" and text2 and not n then
 		Chat:Print("Please enter a valid number from -90 to 90", self.msg_color)
-	elseif text1 == "/ph" and (n >= -90 and n <= 90) then
-		self.settings[3][3] = n
-		Chat:Print("Pitch-hold set to "..self.settings[3][3]..self.settings[3][4], self.msg_color)
-	elseif text1 == "/ph" and (n < -90 or n > 90) then
-		Chat:Print("Please enter a valid number from -90 to 90", self.msg_color)
-		return false
+	elseif text1 == "/ph" and n then
+		if n >= -90 and n <= 90 then
+			self.settings[3][3] = n
+			Chat:Print("Pitch-hold set to "..self.settings[3][3]..self.settings[3][4], self.msg_color)
+		elseif n < -90 or n > 90 then
+			Chat:Print("Please enter a valid number from -90 to 90", self.msg_color)
+		end
+	return false
 	end
 	
 	if text1 == "/hh" and not text2 then
@@ -225,12 +212,14 @@ function Autopilot:Control(args) -- Subscribed to LocalPlayerChat
 		
 	if text1 == "/hh" and text2 and not n then
 		Chat:Print("Please enter a valid number from 0 to 360", self.msg_color)
-	elseif text1 == "/hh" and (n >= 0 and n <= 360) then
-		self.settings[4][3] = n
-		Chat:Print("Heading-hold set to "..self.settings[4][3]..self.settings[4][4], self.msg_color)
-	elseif text1 == "/hh" and (n < 0 or n > 360) then
-		Chat:Print("Please enter a valid number from 0 to 360", self.msg_color)
-		return false
+	elseif text1 == "/hh" and n then
+		if n >= 0 and n <= 360 then
+			self.settings[4][3] = n
+			Chat:Print("Heading-hold set to "..self.settings[4][3]..self.settings[4][4], self.msg_color)
+		elseif n < 0 or n > 360 then
+			Chat:Print("Please enter a valid number from 0 to 360", self.msg_color)
+		end
+	return false
 	end
 	
 	if text1 == "/ah" and not text2 then
@@ -254,12 +243,14 @@ function Autopilot:Control(args) -- Subscribed to LocalPlayerChat
 		
 	if text1 == "/ah" and text2 and not n then
 		Chat:Print("Please enter a valid number from 0 to 5000", self.msg_color)
-	elseif text1 == "/ah" and (n >= 0 and n <= 5000) then
-		self.settings[5][3] = n
-		Chat:Print("Altitude-hold set to "..self.settings[5][3]..self.settings[5][4], self.msg_color)
-	elseif text1 == "/ah" and (n < 0 or n > 5000) then
-		Chat:Print("Please enter a valid number from 0 to 5000", self.msg_color)
-		return false
+	elseif text1 == "/ah" and n then
+		if n >= 0 and n <= 5000 then
+			self.settings[5][3] = n
+			Chat:Print("Altitude-hold set to "..self.settings[5][3]..self.settings[5][4], self.msg_color)
+		elseif n < 0 or n > 5000 then
+			Chat:Print("Please enter a valid number from 0 to 5000", self.msg_color)
+			end
+	return false
 	end
 	
 	if text1 == "/th" and not text2 then
@@ -281,11 +272,13 @@ function Autopilot:Control(args) -- Subscribed to LocalPlayerChat
 		
 	if text1 == "/th" and text2 and not n then
 		Chat:Print("Please enter a valid number from 0 to 700", self.msg_color)
-	elseif text1 == "/th" and (n >= 0 and n <= 700) then
-		self.settings[6][3] = n
-		Chat:Print("Throttle-hold set to "..self.settings[6][3]..self.settings[6][4], self.msg_color)
-	elseif text1 == "/th" and (n < 0 or n > 700) then
-		Chat:Print("Please enter a valid number from 0 to 700", self.msg_color)
+	elseif text1 == "/th" and n then
+		if n >= 0 and n <= 700 then
+			self.settings[6][3] = n
+			Chat:Print("Throttle-hold set to "..self.settings[6][3]..self.settings[6][4], self.msg_color)
+		elseif n < 0 or n > 700 then
+			Chat:Print("Please enter a valid number from 0 to 700", self.msg_color)
+		end
 		return false
 	end
 	
@@ -355,9 +348,9 @@ function Autopilot:RollHold() -- Subscribed to InputPoll
 	
 	local v = LocalPlayer:GetVehicle()
 	
-	roll = Autopilot:GetRoll(v)
+	local roll = Autopilot:GetRoll(v)
 	
-	local power = math.abs(roll - self.settings[2][3]) * self.roll_mod
+	local power = math.abs(roll - self.settings[2][3]) * self.roll_mod, self.max_power
 	if power > self.max_power then power = self.max_power end
 	
 	if self.settings[2][3] <  roll then
