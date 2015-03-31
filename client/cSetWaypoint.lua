@@ -1,4 +1,4 @@
--- Written by Sinister Rectus - http://www.jc-mp.com/forums/index.php?action=profile;u=73431
+-- Written by Sinister Rectus
 
 class 'SetWaypoint'
 
@@ -22,26 +22,18 @@ function SetWaypoint:Control(args) -- Subscribed to LocalPlayerChat
 	local n
 	local m
 	
-	if x_string and y_string then -- If an entry exists for both coordinates
+	if x_string and y_string then
 	
-		if tonumber(x_string) then -- If the x entry is only a number
-			n = tonumber(x_string) -- then set waypoint at that number
-		elseif not tonumber(x_string) then -- If the entry is not only a number
-			if string.find(x_string, "k") then -- and if "k" is found
-				if string.sub(x_string, string.find(x_string, "k") + 1) == "" then -- and nothing else
-					n = tonumber(x_string:split("k")[1]) * 1000 -- then set waypoint at that number * 1000
-				end
-			end
+		if tonumber(x_string) then
+			n = tonumber(x_string)
+		elseif not tonumber(x_string) and string.find(x_string, "k") and string.sub(x_string, string.find(x_string, "k") + 1) == "" then
+			n = tonumber(x_string:split("k")[1]) * 1000
 		end
 		
-		if tonumber(y_string) then -- Ditto for y coord
+		if tonumber(y_string) then 
 			m = tonumber(y_string)
-		elseif not tonumber(y_string) then
-			if string.find(y_string, "k") then
-				if string.sub(y_string, string.find(x_string, "k") + 1) == "" then
-					m = tonumber(y_string:split("k")[1]) * 1000
-				end
-			end
+		elseif not tonumber(y_string) and string.find(y_string, "k") and string.sub(y_string, string.find(x_string, "k") + 1) == "" then
+			m = tonumber(y_string:split("k")[1]) * 1000
 		end	
 		
 	end
