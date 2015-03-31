@@ -1,8 +1,8 @@
 -- Written by Sinister Rectus
 
-class 'AutoPilot'
+class 'Autopilot'
 
-function AutoPilot:__init()
+function Autopilot:__init()
 
 	self.plane = {}
 	self.plane[24] = true -- F-33 DragonFly
@@ -44,7 +44,7 @@ function AutoPilot:__init()
 	self.altitude_mod = 0.3 -- Default 0.3
 	self.throttle_mod = 0.05 -- Default 0.05
 	
-	self.max_power = 0.8 -- Global maximum input power
+	self.max_power = 0.8 -- Global maximum input power, default 1.0
 	
 	-- Lower modifier settings provide weaker inputs
 	-- Optimizing these for each plane may be worth the effort
@@ -65,13 +65,13 @@ function AutoPilot:__init()
 	
 end
 
-function AutoPilot:On()
+function Autopilot:On()
 
 	self.settings[1][2] = true
 	
 end
 
-function AutoPilot:Off()
+function Autopilot:Off()
 
 	for i,k in ipairs(self.settings) do
 		self.settings[i][2] = false
@@ -79,25 +79,22 @@ function AutoPilot:Off()
 	
 end
 
-function AutoPilot:GetRoll()
+function Autopilot:GetRoll(v)
 	
-	local v = LocalPlayer:GetVehicle()
 	local angle = v:GetAngle()
 	return math.deg(angle.roll)
 
 end
 
-function AutoPilot:GetPitch()
+function Autopilot:GetPitch(v)
 
-	local v = LocalPlayer:GetVehicle()
 	local angle = v:GetAngle()
 	return math.deg(angle.pitch)
 
 end
 
-function AutoPilot:GetHeading()
+function Autopilot:GetHeading(v)
 
-	local v = LocalPlayer:GetVehicle()
 	local angle = v:GetAngle()
 	local heading = -math.deg(angle.yaw)
 	
@@ -109,21 +106,19 @@ function AutoPilot:GetHeading()
 	
 end
 
-function AutoPilot:GetAltitude()
+function Autopilot:GetAltitude(v)
 
-	local v = LocalPlayer:GetVehicle()
 	return v:GetPosition().y - 200
 	
 end
 
-function AutoPilot:GetAirSpeed()
+function Autopilot:GetAirSpeed(v)
 
-	local v = LocalPlayer:GetVehicle()
 	return v:GetLinearVelocity():Length() * 3.6
 
 end
 
-function AutoPilot:Control(args) -- Subscribed to LocalPlayerChat
+function Autopilot:Control(args) -- Subscribed to LocalPlayerChat
 
 	local text1 = args.text:split(" ")[1]
 	local text2 = args.text:split(" ")[2]
@@ -133,16 +128,16 @@ function AutoPilot:Control(args) -- Subscribed to LocalPlayerChat
 	if text3 then return false end
 
 	if text1 == "/ap" then
-		if not AutoPilot:PanelAvailable() then
+		if not Autopilot:PanelAvailable() then
 			Chat:Print("Autopilot is not available.", self.msg_color)
 			return false
 		end
 		
 		if self.settings[1][2] == false then
-			AutoPilot:On()
+			Autopilot:On()
 			Chat:Print("Autopilot enabled.", self.msg_color)
 		elseif self.settings[1][2] == true then
-			AutoPilot:Off()
+			Autopilot:Off()
 			Chat:Print("Autopilot disabled.", self.msg_color)
 		end
 		
@@ -150,7 +145,7 @@ function AutoPilot:Control(args) -- Subscribed to LocalPlayerChat
 	end
 	
 	if text1 == "/rh" and not text2 then
-		if not AutoPilot:PanelAvailable() then
+		if not Autopilot:PanelAvailable() then
 			Chat:Print("Autopilot is not available.", self.msg_color)
 			return false
 		end
@@ -181,7 +176,7 @@ function AutoPilot:Control(args) -- Subscribed to LocalPlayerChat
 	end
 	
 	if text1 == "/ph" and not text2 then
-		if not AutoPilot:PanelAvailable() then
+		if not Autopilot:PanelAvailable() then
 			Chat:Print("Autopilot is not available.", self.msg_color)
 			return false
 		end
@@ -212,7 +207,7 @@ function AutoPilot:Control(args) -- Subscribed to LocalPlayerChat
 	end
 	
 	if text1 == "/hh" and not text2 then
-		if not AutoPilot:PanelAvailable() then
+		if not Autopilot:PanelAvailable() then
 			Chat:Print("Autopilot is not available.", self.msg_color)
 			return false
 		end
@@ -245,7 +240,7 @@ function AutoPilot:Control(args) -- Subscribed to LocalPlayerChat
 	end
 	
 	if text1 == "/ah" and not text2 then
-		if not AutoPilot:PanelAvailable() then
+		if not Autopilot:PanelAvailable() then
 			Chat:Print("Autopilot is not available.", self.msg_color)
 			return false
 		end
@@ -274,7 +269,7 @@ function AutoPilot:Control(args) -- Subscribed to LocalPlayerChat
 	end
 	
 	if text1 == "/th" and not text2 then
-		if not AutoPilot:PanelAvailable() then
+		if not Autopilot:PanelAvailable() then
 			Chat:Print("Autopilot is not available.", self.msg_color)
 			return false
 		end
@@ -301,7 +296,7 @@ function AutoPilot:Control(args) -- Subscribed to LocalPlayerChat
 	end
 	
 	if text1 == "/wh" and not text2 then
-		if not AutoPilot:PanelAvailable() then
+		if not Autopilot:PanelAvailable() then
 			Chat:Print("Autopilot is not available.", self.msg_color)
 			return false
 		end
@@ -323,7 +318,7 @@ function AutoPilot:Control(args) -- Subscribed to LocalPlayerChat
 		
 end
 
-function AutoPilot:DrawHUDLine(pos, str, on)
+function Autopilot:DrawHUDLine(pos, str, on)
 
 	local color = self.hud_off_color
 	if on == true then color = self.hud_on_color end
@@ -331,15 +326,15 @@ function AutoPilot:DrawHUDLine(pos, str, on)
 	
 end
 
-function AutoPilot:HUD() -- Subscribed to Render
+function Autopilot:HUD() -- Subscribed to Render
 
-	if AutoPilot:PanelAvailable() then
+	if Autopilot:PanelAvailable() then
 		local position = Vector2(self.screen_width * 0.7, self.screen_height * 0.086)
 		for i,k in ipairs(self.settings) do
 			if #k == 2 then
-				AutoPilot:DrawHUDLine(position, k[1], k[2])
+				Autopilot:DrawHUDLine(position, k[1], k[2])
 			elseif #k > 2 then 
-				AutoPilot:DrawHUDLine(position, k[1].." = "..tostring(math.floor(k[3] + 0.5))..tostring(k[4]), k[2])
+				Autopilot:DrawHUDLine(position, k[1].." = "..tostring(math.floor(k[3] + 0.5))..tostring(k[4]), k[2])
 			end
 			position.y = position.y + Render:GetTextHeight(k[1], self.hud_size)
 		end
@@ -347,7 +342,7 @@ function AutoPilot:HUD() -- Subscribed to Render
 	
 end
 
-function AutoPilot:PanelAvailable() -- Subscribed to PreTick
+function Autopilot:PanelAvailable() -- Subscribed to PreTick
 
 	if LocalPlayer:InVehicle() then
 		local v = LocalPlayer:GetVehicle()
@@ -355,16 +350,18 @@ function AutoPilot:PanelAvailable() -- Subscribed to PreTick
 			return true
 		end
 	end
-	AutoPilot:Off()
+	Autopilot:Off()
 	return false
 	
 end
 
-function AutoPilot:RollHold() -- Subscribed to InputPoll
+function Autopilot:RollHold() -- Subscribed to InputPoll
 
 	if Game:GetState() ~= GUIState.Game or not LocalPlayer:InVehicle() or not self.settings[2][2] then return false end
 	
-	roll = AutoPilot:GetRoll()
+	local v = LocalPlayer:GetVehicle()
+	
+	roll = Autopilot:GetRoll(v)
 	
 	local power = math.abs(roll - self.settings[2][3]) * self.roll_mod
 	if power > self.max_power then power = self.max_power end
@@ -379,12 +376,14 @@ function AutoPilot:RollHold() -- Subscribed to InputPoll
 	
 end
 
-function AutoPilot:PitchHold() -- Subscribed to InputPoll
+function Autopilot:PitchHold() -- Subscribed to InputPoll
 
 	if Game:GetState() ~= GUIState.Game or not LocalPlayer:InVehicle() or not self.settings[3][2] then return false end
 	
-	local pitch = AutoPilot:GetPitch()
-	local roll = AutoPilot:GetRoll()
+	local v = LocalPlayer:GetVehicle()
+	
+	local pitch = Autopilot:GetPitch(v)
+	local roll = Autopilot:GetRoll(v)
 	
 	local power = math.abs(pitch - self.settings[3][3]) * self.pitch_mod
 	if power > self.max_power then power = self.max_power end
@@ -411,11 +410,13 @@ function AutoPilot:PitchHold() -- Subscribed to InputPoll
 	
 end
 
-function AutoPilot:HeadingHold() -- Subscribed to InputPoll
+function Autopilot:HeadingHold() -- Subscribed to InputPoll
 
 	if Game:GetState() ~= GUIState.Game or not LocalPlayer:InVehicle() or not self.settings[4][2] then return false end
+	
+	local v = LocalPlayer:GetVehicle()
 
-	diff = self.settings[4][3] - AutoPilot:GetHeading()
+	diff = self.settings[4][3] - Autopilot:GetHeading(v)
 	
 	if diff >= 0 and diff < 180 then self.settings[2][3] = -diff * self.heading_mod end
 	if diff > 180 then self.settings[2][3] = diff * self.heading_mod  end
@@ -430,11 +431,13 @@ function AutoPilot:HeadingHold() -- Subscribed to InputPoll
 	
 end
 
-function AutoPilot:AltitudeHold() -- Subscribed to InputPoll
+function Autopilot:AltitudeHold() -- Subscribed to InputPoll
 
 	if Game:GetState() ~= GUIState.Game or not LocalPlayer:InVehicle() or not self.settings[5][2] then return false end
+	
+	local v = LocalPlayer:GetVehicle()
 
-	self.settings[3][3] = (self.settings[5][3] - AutoPilot:GetAltitude()) * self.altitude_mod
+	self.settings[3][3] = (self.settings[5][3] - Autopilot:GetAltitude(v)) * self.altitude_mod
 	
 	if self.settings[3][3] > self.pitch_limit then
 		self.settings[3][3] = self.pitch_limit
@@ -444,11 +447,13 @@ function AutoPilot:AltitudeHold() -- Subscribed to InputPoll
 	
 end
 
-function AutoPilot:ThrottleHold() -- Subscribed to InputPoll
+function Autopilot:ThrottleHold() -- Subscribed to InputPoll
 
 	if Game:GetState() ~= GUIState.Game or not LocalPlayer:InVehicle() or not self.settings[6][2] then return false end
 	
-	local air_speed = AutoPilot:GetAirSpeed()
+	local v = LocalPlayer:GetVehicle()
+	
+	local air_speed = Autopilot:GetAirSpeed(v)
 	
 	local power = math.abs(air_speed - self.settings[6][3]) * self.throttle_mod
 	if power > self.max_power then power = self.max_power end
@@ -462,13 +467,14 @@ function AutoPilot:ThrottleHold() -- Subscribed to InputPoll
 	
 end
 
-function AutoPilot:WaypointHold() -- Subscribed to InputPoll
+function Autopilot:WaypointHold() -- Subscribed to InputPoll
 
 	if Game:GetState() ~= GUIState.Game or not LocalPlayer:InVehicle() or not self.settings[7][2] then return false end
+	
 	local v = LocalPlayer:GetVehicle()
 	local position = v:GetPosition()
 	local waypoint = Waypoint:GetPosition()
-	local heading = 0
+	local heading
 	diffx = position.x - waypoint.x
 	diffy = position.z - waypoint.z
 	
@@ -488,7 +494,7 @@ function AutoPilot:WaypointHold() -- Subscribed to InputPoll
 	
 end
 
-function AutoPilot:ResolutionChange(args) -- Subscribed to ResolutionChange
+function Autopilot:ResolutionChange(args) -- Subscribed to ResolutionChange
 
 	self.screen_width = args.size.x
 	self.screen_height = args.size.y
@@ -496,4 +502,4 @@ function AutoPilot:ResolutionChange(args) -- Subscribed to ResolutionChange
 	
 end
 
-AutoPilot = AutoPilot()
+Autopilot = Autopilot()
