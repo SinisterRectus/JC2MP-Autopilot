@@ -14,6 +14,7 @@ function Autopilot:__init()
 	self.plane[81] = {true, 262, 343, "tbd", "tbd", 1500} -- Pell Silverbolt 6 (not upgraded)
 	self.plane[85] = {true, 313, 339, "tbd", "tbd", 100000} -- Bering I-86DP
 	
+	
 	-- Values from left to right are:
 		-- Autopilot availability
 		-- Approximate air speeds in km/h at:
@@ -48,19 +49,20 @@ function Autopilot:__init()
 	-- Booleans determine on/off status, not availability
 	-- Making individual functions unavailable is not featured
 	
-	self.roll_mod = 0.125 -- Default 0.125
-	self.pitch_mod = 0.5 -- Default 0.5
-	self.heading_mod = 2.0 -- Default 2.0
-	self.altitude_mod = 0.3 -- Default 0.3
-	self.throttle_mod = 0.05 -- Default 0.05
+	self.roll_mod = 0.125 -- Default = 0.125
+	self.pitch_mod = 0.5 -- Default = 0.5
+	self.heading_mod = 2.0 -- Default = 2.0
+	self.altitude_mod = 0.3 -- Default = 0.3
+	self.throttle_mod = 0.05 -- Default = 0.05
 	
-	self.max_power = 0.8 -- Global maximum input power, default 1.0
+	self.max_power = 0.8 -- Global maximum input power, default 0.8
 	
 	-- Lower modifier settings provide weaker inputs
 	-- Optimizing these for each plane may be worth the effort
 	
-	self.pitch_limit = 45 -- Maximum absolute angle of attack used by altitude-hold
-	self.roll_limit = 60 -- Maximum absolute bank angle used by heading-hold
+	self.pitch_limit = 45 -- Maximum absolute pitch angle used by altitude-hold
+	self.roll_limit = 60 -- Maximum absolute roll angle used by heading-hold
+	self.alt_bias = 5 -- Upwards bias on altitude-hold to correct for gravity
 	
 	Events:Subscribe("LocalPlayerChat", self, self.Control)
 	Events:Subscribe("Render", self, self.HUD)
@@ -103,6 +105,14 @@ end
 
 function Autopilot:GetAirSpeed(v)
 	return v:GetLinearVelocity():Length() * 3.6
+end
+
+function Autopilot:GetVerticalSpeed(v)
+	return v:GetLinearVelocity().y * 3.6
+end
+
+function Autopilot:GetGroundSpeed(v)
+	return Vector2(v:GetLinearVelocity().x, v:GetLinearVelocity().z):Length() * 3.6
 end
 
 function Autopilot:Control(args) -- Subscribed to LocalPlayerChat
@@ -343,7 +353,7 @@ function Autopilot:PanelAvailable() -- Subscribed to PreTick
 
 	if LocalPlayer:InVehicle() then
 		local v = LocalPlayer:GetVehicle()
-		if LocalPlayer == v:GetDriver() and self.plane[v:GetModelId()] == true then
+		if LocalPlayer == v:GetDriver() and self.plane[v:GetModelId()][1] == true then
 			return true
 		end
 	end
@@ -357,10 +367,10 @@ function Autopilot:RollHold() -- Subscribed to InputPoll
 	if Game:GetState() ~= GUIState.Game or not LocalPlayer:InVehicle() or not self.settings[2][2] then return false end
 	
 	local v = LocalPlayer:GetVehicle()
-	
 	local roll = Autopilot:GetRoll(v)
 	
-	local power = math.clamp(math.abs(roll - self.settings[2][3]) * self.roll_mod, self.max_power)
+	local power = math.abs(roll - self.settings[2][3]) * self.roll_mod, self.max_power
+	if power > self.max_power then power = self.max_power end
 	
 	if self.settings[2][3] <  roll then
 		Input:SetValue(Action.PlaneTurnRight, power)
@@ -377,11 +387,11 @@ function Autopilot:PitchHold() -- Subscribed to InputPoll
 	if Game:GetState() ~= GUIState.Game or not LocalPlayer:InVehicle() or not self.settings[3][2] then return false end
 	
 	local v = LocalPlayer:GetVehicle()
-	
 	local pitch = Autopilot:GetPitch(v)
 	local roll = Autopilot:GetRoll(v)
 	
-	local power = math.clamp(math.abs(pitch - self.settings[3][3]) * self.pitch_mod, self.max_power)
+	local power = math.abs(pitch - self.settings[3][3]) * self.pitch_mod
+	if power > self.max_power then power = self.max_power end
 	
 	if math.abs(roll) < 90 then
 		if self.settings[3][3] > pitch then
@@ -410,7 +420,6 @@ function Autopilot:HeadingHold() -- Subscribed to InputPoll
 	if Game:GetState() ~= GUIState.Game or not LocalPlayer:InVehicle() or not self.settings[4][2] then return false end
 	
 	local v = LocalPlayer:GetVehicle()
-	
 	local heading = -Autopilot:GetYaw(v)
 	
 	if heading <= 0 then
@@ -438,7 +447,7 @@ function Autopilot:AltitudeHold() -- Subscribed to InputPoll
 	
 	local v = LocalPlayer:GetVehicle()
 
-	self.settings[3][3] = (self.settings[5][3] - Autopilot:GetAltitude(v)) * self.altitude_mod
+	self.settings[3][3] = (self.settings[5][3] - Autopilot:GetAltitude(v) + self.alt_bias) * self.altitude_mod
 	
 	if self.settings[3][3] > self.pitch_limit then
 		self.settings[3][3] = self.pitch_limit
@@ -456,7 +465,8 @@ function Autopilot:ThrottleHold() -- Subscribed to InputPoll
 	
 	local air_speed = Autopilot:GetAirSpeed(v)
 	
-	local power = math.clamp(math.abs(air_speed - self.settings[6][3]) * self.throttle_mod, self.max_power)
+	local power = math.abs(air_speed - self.settings[6][3]) * self.throttle_mod
+	if power > self.max_power then power = self.max_power end
 	
 	if air_speed < self.settings[6][3] then
 		Input:SetValue(Action.PlaneIncTrust, power)
@@ -475,10 +485,10 @@ function Autopilot:WaypointHold() -- Subscribed to InputPoll
 	local position = v:GetPosition()
 	local waypoint = Waypoint:GetPosition()
 	local heading
-	local diffx = position.x - waypoint.x
-	local diffy = position.z - waypoint.z
+	diffx = position.x - waypoint.x
+	diffy = position.z - waypoint.z
 	
-	local angle = math.atan(diffx / diffy)
+	angle = math.atan(diffx / diffy)
 	
 	if diffx > 0 and diffy > 0 then
 		heading  = 360 - math.deg(angle)
