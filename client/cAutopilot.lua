@@ -343,7 +343,7 @@ function Autopilot:PanelAvailable() -- Subscribed to PreTick
 
 	if LocalPlayer:InVehicle() then
 		local v = LocalPlayer:GetVehicle()
-		if LocalPlayer == v:GetDriver() and self.plane[v:GetModelId()] then
+		if LocalPlayer == v:GetDriver() and self.plane[v:GetModelId()] == true then
 			return true
 		end
 	end
@@ -360,8 +360,7 @@ function Autopilot:RollHold() -- Subscribed to InputPoll
 	
 	local roll = Autopilot:GetRoll(v)
 	
-	local power = math.abs(roll - self.settings[2][3]) * self.roll_mod
-	if power > self.max_power then power = self.max_power end
+	local power = math.clamp(math.abs(roll - self.settings[2][3]) * self.roll_mod, self.max_power)
 	
 	if self.settings[2][3] <  roll then
 		Input:SetValue(Action.PlaneTurnRight, power)
@@ -382,8 +381,7 @@ function Autopilot:PitchHold() -- Subscribed to InputPoll
 	local pitch = Autopilot:GetPitch(v)
 	local roll = Autopilot:GetRoll(v)
 	
-	local power = math.abs(pitch - self.settings[3][3]) * self.pitch_mod
-	if power > self.max_power then power = self.max_power end
+	local power = math.clamp(math.abs(pitch - self.settings[3][3]) * self.pitch_mod, self.max_power)
 	
 	if math.abs(roll) < 90 then
 		if self.settings[3][3] > pitch then
@@ -458,8 +456,7 @@ function Autopilot:ThrottleHold() -- Subscribed to InputPoll
 	
 	local air_speed = Autopilot:GetAirSpeed(v)
 	
-	local power = math.abs(air_speed - self.settings[6][3]) * self.throttle_mod
-	if power > self.max_power then power = self.max_power end
+	local power = math.clamp(math.abs(air_speed - self.settings[6][3]) * self.throttle_mod, self.max_power)
 	
 	if air_speed < self.settings[6][3] then
 		Input:SetValue(Action.PlaneIncTrust, power)
