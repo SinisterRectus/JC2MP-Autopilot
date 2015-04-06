@@ -25,28 +25,88 @@ function Autopilot:__init()
 	self.scale = 0.012 -- Master HUD scale setting
 	self.hud_size = math.sqrt(self.screen_height^2 + self.screen_width^2) * self.scale -- HUD size based on screen diagonal size
 	
-	self.settings = {}
-	self.settings[1] = {"Autopilot", false}
-	self.settings[2] = {"Roll-Hold", false, 0, "°"}
-	self.settings[3] = {"Pitch-Hold", false, 0, "°"}
-	self.settings[4] = {"Heading-Hold", false, 0, "°"}
-	self.settings[5] = {"Altitude-Hold", false, 0, " m"}
-	self.settings[6] = {"Throttle-Hold", false, 0, " km/h"}
-	self.settings[7] = {"Waypoint-Hold", false}
+	-- BEGIN CONFIG --
 	
-	-- Booleans determine on/off status, not availability
-	-- Making individual functions unavailable is not featured
+	self.config = {
 	
-	self.roll_mod = 0.125 -- Default = 0.125
-	self.pitch_mod = 0.5 -- Default = 0.5
-	self.heading_mod = 2.0 -- Default = 2.0
-	self.altitude_mod = 0.3 -- Default = 0.3
-	self.throttle_mod = 0.05 -- Default = 0.05
-	
-	self.max_power = 0.8 -- Global maximum input power, default 0.8
-	
-	-- Lower modifier settings provide weaker inputs
-	-- Optimizing these for each plane may be worth the effort
+		["ap"] = {
+			["name"] = "Autopilot",
+			["on"] = false,
+			["uses"] = {},
+			["used_by"] = {}
+		},
+		
+		["rh"] = {
+			["name"] = "Roll-Hold",
+			["on"] = false,
+			["uses"] = {},
+			["used_by"] = {"hh"},
+			["setting"] = 0,
+			["units"] = "°",
+			["min"] = -60,
+			["max"] = 60,
+			["gain"] = 0.125		
+		},
+		
+		["ph"] = {			
+			["name"] = "Pitch-Hold",
+			["on"] = false,
+			["uses"] = {},
+			["used_by"] = {"ah"},
+			["setting"] = 0,
+			["units"] = "°",
+			["min"] = -60,
+			["max"] = 60,
+			["gain"] = 0.5
+		},
+		
+		["hh"] = {			
+			["name"] = "Heading-Hold",
+			["on"] = false,
+			["uses"] = {"rh"},
+			["used_by"] = {"wh"},
+			["setting"] = 0,
+			["units"] = "°",
+			["min"] = 0,
+			["max"] = 360,
+			["gain"] = 2.0,
+		},
+		
+		["ah"] = {
+			["name"] = "Altitude-Hold",
+			["on"] = false,
+			["uses"] = {"ph"},
+			["used_by"] = {},
+			["setting"] = 0,
+			["units"] = " m",
+			["min"] = 0,
+			["max"] = 5000,
+			["gain"] = 0.3
+		},
+		
+		["th"] = {
+			["name"] = "Throttle-Hold",
+			["on"] = false,
+			["uses"] = {},
+			["used_by"] = {},
+			["setting"] = 0,
+			["units"] = " km/h" ,
+			["min"] = 0,
+			["max"] = 700,
+			["gain"] = 0.05,
+		},
+		
+		["wh"] = {
+			["name"] = "Waypoint-Hold",
+			["on"] = false,
+			["uses"] = {"hh", "rh"},
+			["used_by"] = {}
+		}
+	}
+			
+	-- END CONFIG --
+		
+	self.max_power = 1.0 -- Global maximum input value
 	
 	self.pitch_limit = 45 -- Maximum absolute pitch angle used by altitude-hold
 	self.roll_limit = 60 -- Maximum absolute roll angle used by heading-hold
@@ -54,7 +114,6 @@ function Autopilot:__init()
 	
 	Events:Subscribe("LocalPlayerChat", self, self.Control)
 	Events:Subscribe("Render", self, self.HUD)
-	Events:Subscribe("PreTick", self, self.PanelAvailable)
 	Events:Subscribe("InputPoll", self, self.RollHold)
 	Events:Subscribe("InputPoll", self, self.PitchHold)
 	Events:Subscribe("InputPoll", self, self.HeadingHold)
@@ -65,14 +124,8 @@ function Autopilot:__init()
 	
 end
 
-function Autopilot:On()
-	self.settings[1][2] = true
-end
-
-function Autopilot:Off()
-	for i,k in ipairs(self.settings) do
-		self.settings[i][2] = false
-	end
+function tostringint(n)
+	return tostring(math.floor(n + 0.5))
 end
 
 function Autopilot:GetRoll(v)
@@ -107,237 +160,94 @@ function Autopilot:Control(args) -- Subscribed to LocalPlayerChat
 
 	local text1 = args.text:split(" ")[1]
 	local text2 = args.text:split(" ")[2]
-	local text3 = args.text:split(" ")[3]
+	if args.text:split(" ")[3] then return false end
+	
+	local cmd = text1:split("/")[2]
 	local n = tonumber(text2)
 	
-	if text3 then return false end
-
-	if text1 == "/ap" then
-		if not Autopilot:PanelAvailable() then
-			Chat:Print("Autopilot is not available.", self.msg_color)
-			return false
-		end
-		
-		if self.settings[1][2] == false then
-			Autopilot:On()
-			Chat:Print("Autopilot enabled.", self.msg_color)
-		elseif self.settings[1][2] == true then
-			Autopilot:Off()
-			Chat:Print("Autopilot disabled.", self.msg_color)
-		end
-		
-	return false
-	end
-	
-	if text1 == "/rh" and not text2 then
-		if not Autopilot:PanelAvailable() then
-			Chat:Print("Autopilot is not available.", self.msg_color)
-			return false
-		end
-		
-		if self.settings[2][2] == false then
-			Chat:Print("Roll-hold enabled.", self.msg_color)
-			self.settings[1][2] = true
-			self.settings[2][2] = true
-		elseif self.settings[2][2] == true then
-			if self.settings[4][2] == true then
-				Chat:Print("Heading-hold is using roll-hold!", self.msg_color)
-				return false
+	if self.config[cmd] then
+		if not text2 then
+			if self.config[cmd].on == false then
+				if self.config.ap.on == false then
+					self.config.ap.on = true
+				end
+				for i,k in ipairs(self.config[cmd].uses) do
+					self.config[k].on = true
+				end
+				self.config[cmd].on = true
+				Chat:Print(self.config[cmd].name.." enabled", self.msg_color)
+			elseif self.config[cmd].on == true then
+				if cmd == "ap" then
+					for i,k in pairs(self.config) do
+						k["on"] = false
+					end
+				end
+				for i,k in ipairs(self.config[cmd].used_by) do
+					if self.config[k].on == true then
+						Chat:Print(self.config[k].name.." is using "..self.config[cmd].name, self.msg_color)
+						return false
+					end
+				end
+				self.config[cmd].on = false
+				for i,k in ipairs(self.config[cmd].uses) do
+					self.config[k].on = false
+				end
+				Chat:Print(self.config[cmd].name.." disabled", self.msg_color)
 			end
-			Chat:Print("Roll-hold disabled.", self.msg_color)	
-			self.settings[2][2] = false
-			return false
-		end
-	end
-		
-	if text1 == "/rh" and text2 and not n then
-		Chat:Print("Please enter a valid number from -90 to 90", self.msg_color)
-	elseif text1 == "/rh" and n then
-		if n >= -90 and n <= 90 then
-			self.settings[2][3] = n
-			Chat:Print("Roll-hold set to "..self.settings[2][3]..self.settings[2][4], self.msg_color)
-		elseif n < -90 or n > 90 then
-			Chat:Print("Please enter a valid number from -90 to 90", self.msg_color)
-		end
-	return false
-	end
-	
-	if text1 == "/ph" and not text2 then
-		if not Autopilot:PanelAvailable() then
-			Chat:Print("Autopilot is not available.", self.msg_color)
-			return false
-		end
-		
-		if self.settings[3][2] == false then
-			Chat:Print("Pitch-hold enabled.", self.msg_color)
-			self.settings[1][2] = true
-			self.settings[3][2] = true
-		elseif self.settings[3][2] == true then
-			if self.settings[5][2] == true then
-				Chat:Print("Altitude-hold is using pitch-hold!", self.msg_color)
-				return false
+		elseif n and self.config[cmd].setting then
+			if n >= self.config[cmd].min and n <= self.config[cmd].max then
+				self.config[cmd].setting = n
+				Chat:Print(self.config[cmd].name.." set to "..self.config[cmd].setting, self.msg_color)
+			else
+				Chat:Print("Please enter a number between "..self.config[cmd].min.." and "..self.config[cmd].max, self.msg_color)
 			end
-			Chat:Print("Pitch-hold disabled.", self.msg_color)	
-			self.settings[3][2] = false
-			return false
-		end
-	end
-		
-	if text1 == "/ph" and text2 and not n then
-		Chat:Print("Please enter a valid number from -90 to 90", self.msg_color)
-	elseif text1 == "/ph" and n then
-		if n >= -90 and n <= 90 then
-			self.settings[3][3] = n
-			Chat:Print("Pitch-hold set to "..self.settings[3][3]..self.settings[3][4], self.msg_color)
-		elseif n < -90 or n > 90 then
-			Chat:Print("Please enter a valid number from -90 to 90", self.msg_color)
+		elseif not n and self.config[cmd].setting then
+			Chat:Print("Please enter a number between "..self.config[cmd].min.." and "..self.config[cmd].max, self.msg_color)
+		else
+			Chat:Print("Invalid autopilot command", self.msg_color)
 		end
 	return false
-	end
-	
-	if text1 == "/hh" and not text2 then
-		if not Autopilot:PanelAvailable() then
-			Chat:Print("Autopilot is not available.", self.msg_color)
-			return false
-		end
-		
-		if self.settings[4][2] == false then
-			Chat:Print("Heading-hold enabled.", self.msg_color)
-			self.settings[1][2] = true
-			self.settings[2][2] = true
-			self.settings[4][2] = true
-		elseif self.settings[4][2] == true then
-			if self.settings[7][2] == true then
-				Chat:Print("Waypoint-hold is using heading-hold!", self.msg_color)
-				return false
-			end
-			Chat:Print("Heading-hold disabled.", self.msg_color)	
-			self.settings[2][2] = false
-			self.settings[4][2] = false
-			return false
-		end
-	end
-		
-	if text1 == "/hh" and text2 and not n then
-		Chat:Print("Please enter a valid number from 0 to 360", self.msg_color)
-	elseif text1 == "/hh" and n then
-		if n >= 0 and n <= 360 then
-			self.settings[4][3] = n
-			Chat:Print("Heading-hold set to "..self.settings[4][3]..self.settings[4][4], self.msg_color)
-		elseif n < 0 or n > 360 then
-			Chat:Print("Please enter a valid number from 0 to 360", self.msg_color)
-		end
-	return false
-	end
-	
-	if text1 == "/ah" and not text2 then
-		if not Autopilot:PanelAvailable() then
-			Chat:Print("Autopilot is not available.", self.msg_color)
-			return false
-		end
-		
-		if self.settings[5][2] == false then
-			Chat:Print("Altitude-hold enabled.", self.msg_color)
-			self.settings[1][2] = true
-			self.settings[3][2] = true
-			self.settings[5][2] = true
-		elseif self.settings[5][2] == true then
-			Chat:Print("Altitude-hold disabled.", self.msg_color)	
-			self.settings[3][2] = false
-			self.settings[5][2] = false
-			return false
-		end
-	end
-		
-	if text1 == "/ah" and text2 and not n then
-		Chat:Print("Please enter a valid number from 0 to 5000", self.msg_color)
-	elseif text1 == "/ah" and n then
-		if n >= 0 and n <= 5000 then
-			self.settings[5][3] = n
-			Chat:Print("Altitude-hold set to "..self.settings[5][3]..self.settings[5][4], self.msg_color)
-		elseif n < 0 or n > 5000 then
-			Chat:Print("Please enter a valid number from 0 to 5000", self.msg_color)
-			end
-	return false
-	end
-	
-	if text1 == "/th" and not text2 then
-		if not Autopilot:PanelAvailable() then
-			Chat:Print("Autopilot is not available.", self.msg_color)
-			return false
-		end
-		
-		if self.settings[6][2] == false then
-			Chat:Print("Throttle-hold enabled.", self.msg_color)
-			self.settings[1][2] = true
-			self.settings[6][2] = true
-		elseif self.settings[6][2] == true then
-			Chat:Print("Throttle-hold disabled.", self.msg_color)	
-			self.settings[6][2] = false
-			return false
-		end
-	end
-		
-	if text1 == "/th" and text2 and not n then
-		Chat:Print("Please enter a valid number from 0 to 700", self.msg_color)
-	elseif text1 == "/th" and n then
-		if n >= 0 and n <= 700 then
-			self.settings[6][3] = n
-			Chat:Print("Throttle-hold set to "..self.settings[6][3]..self.settings[6][4], self.msg_color)
-		elseif n < 0 or n > 700 then
-			Chat:Print("Please enter a valid number from 0 to 700", self.msg_color)
-		end
-		return false
-	end
-	
-	if text1 == "/wh" and not text2 then
-		if not Autopilot:PanelAvailable() then
-			Chat:Print("Autopilot is not available.", self.msg_color)
-			return false
-		end
-		
-		if self.settings[7][2] == false then
-			Chat:Print("Waypoint-hold enabled.", self.msg_color)
-			self.settings[1][2] = true
-			self.settings[2][2] = true
-			self.settings[4][2] = true
-			self.settings[7][2] = true
-		elseif self.settings[7][2] == true then
-			Chat:Print("Waypoint-hold disabled.", self.msg_color)	
-			self.settings[2][2] = false
-			self.settings[4][2] = false
-			self.settings[7][2] = false
-			return false
-		end
 	end
 		
 end
 
-function Autopilot:DrawHUDLine(pos, str, on)
-
-	local color = self.hud_off_color
-	if on == true then color = self.hud_on_color end
-	Render:DrawText(pos, str, color, self.hud_size)
-	
+function Autopilot:HUDColor(on)
+	if on == true then
+		return self.hud_on_color
+	else
+		return self.hud_off_color
+	end
 end
 
 function Autopilot:HUD() -- Subscribed to Render
 
 	if Autopilot:PanelAvailable() then
+	
 		local position = Vector2(self.screen_width * 0.7, self.screen_height * 0.086)
-		for i,k in ipairs(self.settings) do
-			if #k == 2 then
-				Autopilot:DrawHUDLine(position, k[1], k[2])
-			elseif #k > 2 then 
-				Autopilot:DrawHUDLine(position, k[1].." = "..tostring(math.floor(k[3] + 0.5))..tostring(k[4]), k[2])
-			end
-			position.y = position.y + Render:GetTextHeight(k[1], self.hud_size)
-		end
+		
+		local autopilot_string = self.config.ap.name
+		local roll_string = self.config.rh.name.." - "..tostringint(self.config.rh.setting)..self.config.rh.units
+		local pitch_string = self.config.ph.name.." - "..tostringint(self.config.ph.setting)..self.config.ph.units
+		local heading_string = self.config.hh.name.." - "..tostringint(self.config.hh.setting)..self.config.hh.units
+		local altitude_string = self.config.ah.name.." - "..tostringint(self.config.ah.setting)..self.config.ah.units
+		local throttle_string = self.config.th.name.." - "..tostringint(self.config.th.setting)..self.config.th.units
+		local waypoint_string = self.config.wh.name
+		
+		local line = Vector2(0, self.hud_size)
+		
+		Render:DrawText(position + line * 0, autopilot_string, Autopilot:HUDColor(self.config.ap.on), self.hud_size)
+		Render:DrawText(position + line * 1, roll_string, Autopilot:HUDColor(self.config.rh.on), self.hud_size)
+		Render:DrawText(position + line * 2, pitch_string, Autopilot:HUDColor(self.config.ph.on), self.hud_size)
+		Render:DrawText(position + line * 3, heading_string, Autopilot:HUDColor(self.config.hh.on), self.hud_size)
+		Render:DrawText(position + line * 4, altitude_string, Autopilot:HUDColor(self.config.ah.on), self.hud_size)
+		Render:DrawText(position + line * 5, throttle_string, Autopilot:HUDColor(self.config.th.on), self.hud_size)
+		Render:DrawText(position + line * 6, waypoint_string, Autopilot:HUDColor(self.config.wh.on), self.hud_size)
+		
 	end
 	
 end
 
-function Autopilot:PanelAvailable() -- Subscribed to PreTick
+function Autopilot:PanelAvailable()
 
 	if LocalPlayer:InVehicle() then
 		local v = LocalPlayer:GetVehicle()
@@ -345,26 +255,28 @@ function Autopilot:PanelAvailable() -- Subscribed to PreTick
 			return true
 		end
 	end
-	Autopilot:Off()
+	for i,k in pairs(self.config) do
+		k["on"] = false
+	end
 	return false
 	
 end
 
 function Autopilot:RollHold() -- Subscribed to InputPoll
 
-	if Game:GetState() ~= GUIState.Game or not LocalPlayer:InVehicle() or not self.settings[2][2] then return false end
+	if Game:GetState() ~= GUIState.Game or not Autopilot:PanelAvailable() or not self.config.rh.on then return false end
 	
 	local v = LocalPlayer:GetVehicle()
 	local roll = Autopilot:GetRoll(v)
 	
-	local power = math.abs(roll - self.settings[2][3]) * self.roll_mod, self.max_power
+	local power = math.abs(roll - self.config.rh.setting) * self.config.rh.gain
 	if power > self.max_power then power = self.max_power end
 	
-	if self.settings[2][3] <  roll then
+	if self.config.rh.setting < roll then
 		Input:SetValue(Action.PlaneTurnRight, power)
 	end
 	
-	if self.settings[2][3] > roll then
+	if self.config.rh.setting > roll then
 		Input:SetValue(Action.PlaneTurnLeft, power)
 	end
 	
@@ -372,31 +284,31 @@ end
 
 function Autopilot:PitchHold() -- Subscribed to InputPoll
 
-	if Game:GetState() ~= GUIState.Game or not LocalPlayer:InVehicle() or not self.settings[3][2] then return false end
+	if Game:GetState() ~= GUIState.Game or not Autopilot:PanelAvailable() or not self.config.ph.on then return false end
 	
 	local v = LocalPlayer:GetVehicle()
 	local pitch = Autopilot:GetPitch(v)
 	local roll = Autopilot:GetRoll(v)
 	
-	local power = math.abs(pitch - self.settings[3][3]) * self.pitch_mod
+	local power = math.abs(pitch - self.config.ph.setting) * self.config.ph.gain
 	if power > self.max_power then power = self.max_power end
 	
 	if math.abs(roll) < 90 then
-		if self.settings[3][3] > pitch then
+		if self.config.ph.setting > pitch then
 			Input:SetValue(Action.PlanePitchUp, power)
 		end
 		
-		if self.settings[3][3] < pitch then
+		if self.config.ph.setting < pitch then
 			Input:SetValue(Action.PlanePitchDown, power)
 		end
 	end
 	
 	if math.abs(roll) >= 90 then
-		if self.settings[3][3] > pitch then
+		if self.config.ph.setting > pitch then
 			Input:SetValue(Action.PlanePitchDown, power)
 		end
 		
-		if self.settings[3][3] < pitch then
+		if self.config.ph.setting < pitch then
 			Input:SetValue(Action.PlanePitchUp, power)
 		end
 	end
@@ -405,7 +317,7 @@ end
 
 function Autopilot:HeadingHold() -- Subscribed to InputPoll
 
-	if Game:GetState() ~= GUIState.Game or not LocalPlayer:InVehicle() or not self.settings[4][2] then return false end
+	if Game:GetState() ~= GUIState.Game or not Autopilot:PanelAvailable() or not self.config.hh.on then return false end
 	
 	local v = LocalPlayer:GetVehicle()
 	local heading = -Autopilot:GetYaw(v)
@@ -414,52 +326,52 @@ function Autopilot:HeadingHold() -- Subscribed to InputPoll
 		heading = heading + 360
 	end
 	
-	diff = self.settings[4][3] - heading
+	diff = self.config.hh.setting - heading
 	
-	if diff >= 0 and diff < 180 then self.settings[2][3] = -diff * self.heading_mod end
-	if diff > 180 then self.settings[2][3] = diff * self.heading_mod  end
-	if diff < -180 then self.settings[2][3] = diff * self.heading_mod  end
-	if diff <= 0 and diff > -180 then self.settings[2][3] = -diff * self.heading_mod end
+	if diff >= 0 and diff < 180 then self.config.rh.setting = -diff * self.config.hh.gain end
+	if diff > 180 then self.config.rh.setting = diff * self.config.hh.gain  end
+	if diff < -180 then self.config.rh.setting = diff * self.config.hh.gain  end
+	if diff <= 0 and diff > -180 then self.config.rh.setting = -diff * self.config.hh.gain end
 	
-	if self.settings[2][3] > self.roll_limit then
-		self.settings[2][3] = self.roll_limit
-	elseif self.settings[2][3] < -self.roll_limit then
-		self.settings[2][3] = -self.roll_limit
+	if self.config.rh.setting > self.roll_limit then
+		self.config.rh.setting = self.roll_limit
+	elseif self.config.rh.setting < -self.roll_limit then
+		self.config.rh.setting = -self.roll_limit
 	end
 	
 end
 
 function Autopilot:AltitudeHold() -- Subscribed to InputPoll
 
-	if Game:GetState() ~= GUIState.Game or not LocalPlayer:InVehicle() or not self.settings[5][2] then return false end
+	if Game:GetState() ~= GUIState.Game or not Autopilot:PanelAvailable() or not self.config.ah.on then return false end
 	
 	local v = LocalPlayer:GetVehicle()
 
-	self.settings[3][3] = (self.settings[5][3] - Autopilot:GetAltitude(v) + self.alt_bias) * self.altitude_mod
+	self.config.ph.setting = (self.config.ah.setting - Autopilot:GetAltitude(v) + self.alt_bias) * self.config.ah.gain
 	
-	if self.settings[3][3] > self.pitch_limit then
-		self.settings[3][3] = self.pitch_limit
-	elseif self.settings[3][3] < -self.pitch_limit then
-		self.settings[3][3] = -self.pitch_limit
+	if self.config.ph.setting > self.pitch_limit then
+		self.config.ph.setting = self.pitch_limit
+	elseif self.config.ph.setting < -self.pitch_limit then
+		self.config.ph.setting = -self.pitch_limit
 	end
 	
 end
 
 function Autopilot:ThrottleHold() -- Subscribed to InputPoll
 
-	if Game:GetState() ~= GUIState.Game or not LocalPlayer:InVehicle() or not self.settings[6][2] then return false end
+	if Game:GetState() ~= GUIState.Game or not Autopilot:PanelAvailable() or not self.config.th.on then return false end
 	
 	local v = LocalPlayer:GetVehicle()
 	
 	local air_speed = Autopilot:GetAirSpeed(v)
 	
-	local power = math.abs(air_speed - self.settings[6][3]) * self.throttle_mod
+	local power = math.abs(air_speed - self.config.th.setting) * self.config.th.gain
 	if power > self.max_power then power = self.max_power end
 	
-	if air_speed < self.settings[6][3] then
+	if air_speed < self.config.th.setting then
 		Input:SetValue(Action.PlaneIncTrust, power)
 	end
-	if air_speed > self.settings[6][3] then
+	if air_speed > self.config.th.setting then
 		Input:SetValue(Action.PlaneDecTrust, power)
 	end
 	
@@ -467,7 +379,7 @@ end
 
 function Autopilot:WaypointHold() -- Subscribed to InputPoll
 
-	if Game:GetState() ~= GUIState.Game or not LocalPlayer:InVehicle() or not self.settings[7][2] then return false end
+	if Game:GetState() ~= GUIState.Game or not Autopilot:PanelAvailable() or not self.config.wh.on then return false end
 	
 	local v = LocalPlayer:GetVehicle()
 	local position = v:GetPosition()
@@ -488,7 +400,7 @@ function Autopilot:WaypointHold() -- Subscribed to InputPoll
 		heading = 180 + math.abs(math.deg(angle))
 	end
 	
-	self.settings[4][3] = heading
+	self.config.hh.setting = heading
 	
 end
 
