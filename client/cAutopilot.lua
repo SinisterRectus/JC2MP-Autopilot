@@ -109,7 +109,7 @@ function Autopilot:__init()
 	self.max_power = 1.0 -- Global maximum input value
 	
 	self.pitch_limit = 45 -- Maximum absolute pitch angle used by altitude-hold
-	self.roll_limit = 60 -- Maximum absolute roll angle used by heading-hold
+	self.roll_limit = 45 -- Maximum absolute roll angle used by heading-hold
 	self.alt_bias = 5 -- Upwards bias on altitude-hold to correct for gravity
 	
 	Events:Subscribe("LocalPlayerChat", self, self.Control)
@@ -164,6 +164,14 @@ function Autopilot:Control(args) -- Subscribed to LocalPlayerChat
 	
 	local cmd = text1:split("/")[2]
 	local n = tonumber(text2)
+	
+	if cmd == "wh" then
+		local waypoint, marker = Waypoint:GetPosition()
+		if not marker then
+			Chat:Print("Waypoint not set", self.msg_color)
+			return false
+		end
+	end
 	
 	if self.config[cmd] then
 		if not text2 then
@@ -326,12 +334,9 @@ function Autopilot:HeadingHold() -- Subscribed to InputPoll
 		heading = heading + 360
 	end
 	
-	diff = self.config.hh.setting - heading
+	diff = ((self.config.hh.setting - heading) + 180) % 360 - 180
 	
-	if diff >= 0 and diff < 180 then self.config.rh.setting = -diff * self.config.hh.gain end
-	if diff > 180 then self.config.rh.setting = diff * self.config.hh.gain  end
-	if diff < -180 then self.config.rh.setting = diff * self.config.hh.gain  end
-	if diff <= 0 and diff > -180 then self.config.rh.setting = -diff * self.config.hh.gain end
+	self.config.rh.setting = -diff * self.config.hh.gain
 	
 	if self.config.rh.setting > self.roll_limit then
 		self.config.rh.setting = self.roll_limit
@@ -381,9 +386,19 @@ function Autopilot:WaypointHold() -- Subscribed to InputPoll
 
 	if Game:GetState() ~= GUIState.Game or not Autopilot:PanelAvailable() or not self.config.wh.on then return false end
 	
+	local waypoint, marker = Waypoint:GetPosition()
+	
+	if not marker then
+		self.config.wh.on = false
+		for i,k in ipairs(self.config.wh.uses) do
+			self.config[k].on = false
+		end
+		Chat:Print(self.config.wh.name.." disabled", self.msg_color)
+		return false
+	end
+	
 	local v = LocalPlayer:GetVehicle()
 	local position = v:GetPosition()
-	local waypoint = Waypoint:GetPosition()
 	local heading
 	diffx = position.x - waypoint.x
 	diffy = position.z - waypoint.z
