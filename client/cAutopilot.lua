@@ -40,12 +40,12 @@ function Autopilot:__init()
 			["name"] = "Roll-Hold",
 			["on"] = false,
 			["uses"] = {},
-			["used_by"] = {"hh"},
+			["used_by"] = {"hh", "wh"},
 			["setting"] = 0,
 			["units"] = "°",
 			["min"] = -60,
 			["max"] = 60,
-			["gain"] = 0.125		
+			["gain"] = 0.08	
 		},
 		
 		["ph"] = {			
@@ -57,7 +57,7 @@ function Autopilot:__init()
 			["units"] = "°",
 			["min"] = -60,
 			["max"] = 60,
-			["gain"] = 0.5
+			["gain"] = 0.50
 		},
 		
 		["hh"] = {			
@@ -69,7 +69,8 @@ function Autopilot:__init()
 			["units"] = "°",
 			["min"] = 0,
 			["max"] = 360,
-			["gain"] = 2.0,
+			["gain"] = 2.00,
+			["roll_limit"] = 45 -- Maximum roll angle while HH is active
 		},
 		
 		["ah"] = {
@@ -81,7 +82,9 @@ function Autopilot:__init()
 			["units"] = " m",
 			["min"] = 0,
 			["max"] = 5000,
-			["gain"] = 0.3
+			["gain"] = 0.30,
+			["pitch_limit"] = 45, -- Maximum pitch angle while AH is active
+			["bias"] = 5 -- Correction for gravity
 		},
 		
 		["th"] = {
@@ -107,10 +110,6 @@ function Autopilot:__init()
 	-- END CONFIG --
 		
 	self.max_power = 1.0 -- Global maximum input value
-	
-	self.pitch_limit = 45 -- Maximum absolute pitch angle used by altitude-hold
-	self.roll_limit = 45 -- Maximum absolute roll angle used by heading-hold
-	self.alt_bias = 5 -- Upwards bias on altitude-hold to correct for gravity
 	
 	Events:Subscribe("LocalPlayerChat", self, self.Control)
 	Events:Subscribe("Render", self, self.HUD)
@@ -141,7 +140,7 @@ function Autopilot:GetYaw(v)
 end
 
 function Autopilot:GetAltitude(v)
-	return v:GetPosition().y - 200	
+	return math.max(v:GetPosition().y - 200, 0)
 end
 
 function Autopilot:GetAirSpeed(v)
@@ -160,63 +159,70 @@ function Autopilot:Control(args) -- Subscribed to LocalPlayerChat
 
 	local text1 = args.text:split(" ")[1]
 	local text2 = args.text:split(" ")[2]
-	if args.text:split(" ")[3] then return false end
 	
+	if args.text:split(" ")[3] then
+		Chat:Print("Invalid autopilot command", self.msg_color)
+		return false 
+	end
+	
+	local waypoint, marker = Waypoint:GetPosition()
 	local cmd = text1:split("/")[2]
 	local n = tonumber(text2)
 	
-	if cmd == "wh" then
-		local waypoint, marker = Waypoint:GetPosition()
-		if not marker then
-			Chat:Print("Waypoint not set", self.msg_color)
-			return false
-		end
-	end
-	
 	if self.config[cmd] then
-		if not text2 then
-			if self.config[cmd].on == false then
-				if self.config.ap.on == false then
-					self.config.ap.on = true
-				end
-				for i,k in ipairs(self.config[cmd].uses) do
-					self.config[k].on = true
-				end
-				self.config[cmd].on = true
-				Chat:Print(self.config[cmd].name.." enabled", self.msg_color)
-			elseif self.config[cmd].on == true then
-				if cmd == "ap" then
-					for i,k in pairs(self.config) do
-						k["on"] = false
+		if Autopilot:PanelAvailable() then
+			if not text2 then
+				if self.config[cmd].on == false then
+					if cmd == "wh" and not marker then
+						Chat:Print("No waypoint set", self.msg_color)
+					else
+						if self.config.ap.on == false then
+							self.config.ap.on = true
+						end
+						for i,k in ipairs(self.config[cmd].uses) do
+							self.config[k].on = true
+						end
+						self.config[cmd].on = true
+						Chat:Print(self.config[cmd].name.." enabled", self.msg_color)
+					end
+				elseif self.config[cmd].on == true then
+					if cmd == "ap" then
+						for i,k in pairs(self.config) do
+							k["on"] = false
+						end
+					end
+					local in_use = false
+					for i,k in ipairs(self.config[cmd].used_by) do
+						if self.config[k].on == true then
+							Chat:Print(self.config[k].name.." is using "..self.config[cmd].name, self.msg_color)
+							used = true
+						end
+					end
+					if in_use == false then
+						self.config[cmd].on = false
+						for i,k in ipairs(self.config[cmd].uses) do
+							self.config[k].on = false
+						end
+						Chat:Print(self.config[cmd].name.." disabled", self.msg_color)
 					end
 				end
-				for i,k in ipairs(self.config[cmd].used_by) do
-					if self.config[k].on == true then
-						Chat:Print(self.config[k].name.." is using "..self.config[cmd].name, self.msg_color)
-						return false
-					end
+			elseif n and self.config[cmd].setting then
+				if n >= self.config[cmd].min and n <= self.config[cmd].max then
+					self.config[cmd].setting = n
+					Chat:Print(self.config[cmd].name.." set to "..self.config[cmd].setting, self.msg_color)
+				else
+					Chat:Print("Please enter a number between "..self.config[cmd].min.." and "..self.config[cmd].max, self.msg_color)
 				end
-				self.config[cmd].on = false
-				for i,k in ipairs(self.config[cmd].uses) do
-					self.config[k].on = false
-				end
-				Chat:Print(self.config[cmd].name.." disabled", self.msg_color)
-			end
-		elseif n and self.config[cmd].setting then
-			if n >= self.config[cmd].min and n <= self.config[cmd].max then
-				self.config[cmd].setting = n
-				Chat:Print(self.config[cmd].name.." set to "..self.config[cmd].setting, self.msg_color)
-			else
+			elseif not n and self.config[cmd].setting then
 				Chat:Print("Please enter a number between "..self.config[cmd].min.." and "..self.config[cmd].max, self.msg_color)
+			else
+				Chat:Print("Invalid autopilot command", self.msg_color)
 			end
-		elseif not n and self.config[cmd].setting then
-			Chat:Print("Please enter a number between "..self.config[cmd].min.." and "..self.config[cmd].max, self.msg_color)
 		else
-			Chat:Print("Invalid autopilot command", self.msg_color)
+			Chat:Print("Autopilot not available", self.msg_color)
 		end
 	return false
-	end
-		
+	end	
 end
 
 function Autopilot:HUDColor(on)
@@ -234,11 +240,11 @@ function Autopilot:HUD() -- Subscribed to Render
 		local position = Vector2(self.screen_width * 0.7, self.screen_height * 0.086)
 		
 		local autopilot_string = self.config.ap.name
-		local roll_string = self.config.rh.name.." - "..tostringint(self.config.rh.setting)..self.config.rh.units
-		local pitch_string = self.config.ph.name.." - "..tostringint(self.config.ph.setting)..self.config.ph.units
-		local heading_string = self.config.hh.name.." - "..tostringint(self.config.hh.setting)..self.config.hh.units
-		local altitude_string = self.config.ah.name.." - "..tostringint(self.config.ah.setting)..self.config.ah.units
-		local throttle_string = self.config.th.name.." - "..tostringint(self.config.th.setting)..self.config.th.units
+		local roll_string = self.config.rh.name.." : "..tostringint(self.config.rh.setting)..self.config.rh.units
+		local pitch_string = self.config.ph.name.." : "..tostringint(self.config.ph.setting)..self.config.ph.units
+		local heading_string = self.config.hh.name.." : "..tostringint(self.config.hh.setting)..self.config.hh.units
+		local altitude_string = self.config.ah.name.." : "..tostringint(self.config.ah.setting)..self.config.ah.units
+		local throttle_string = self.config.th.name.." : "..tostringint(self.config.th.setting)..self.config.th.units
 		local waypoint_string = self.config.wh.name
 		
 		local line = Vector2(0, self.hud_size)
@@ -338,10 +344,10 @@ function Autopilot:HeadingHold() -- Subscribed to InputPoll
 	
 	self.config.rh.setting = -diff * self.config.hh.gain
 	
-	if self.config.rh.setting > self.roll_limit then
-		self.config.rh.setting = self.roll_limit
-	elseif self.config.rh.setting < -self.roll_limit then
-		self.config.rh.setting = -self.roll_limit
+	if self.config.rh.setting > self.config.hh.roll_limit then
+		self.config.rh.setting = self.config.hh.roll_limit
+	elseif self.config.rh.setting < -self.config.hh.roll_limit then
+		self.config.rh.setting = -self.config.hh.roll_limit
 	end
 	
 end
@@ -352,12 +358,12 @@ function Autopilot:AltitudeHold() -- Subscribed to InputPoll
 	
 	local v = LocalPlayer:GetVehicle()
 
-	self.config.ph.setting = (self.config.ah.setting - Autopilot:GetAltitude(v) + self.alt_bias) * self.config.ah.gain
+	self.config.ph.setting = (self.config.ah.setting - Autopilot:GetAltitude(v) + self.config.ah.bias) * self.config.ah.gain
 	
-	if self.config.ph.setting > self.pitch_limit then
-		self.config.ph.setting = self.pitch_limit
-	elseif self.config.ph.setting < -self.pitch_limit then
-		self.config.ph.setting = -self.pitch_limit
+	if self.config.ph.setting > self.config.ah.pitch_limit then
+		self.config.ph.setting = self.config.ah.pitch_limit
+	elseif self.config.ph.setting < -self.config.ah.pitch_limit then
+		self.config.ph.setting = -self.config.ah.pitch_limit
 	end
 	
 end
