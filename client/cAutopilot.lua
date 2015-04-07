@@ -11,7 +11,7 @@ function Autopilot:__init()
 	self.plane[39] = true -- Aeroliner 474
 	self.plane[51] = true -- Cassius 192
 	self.plane[59] = false -- Peek Airhawk 225
-	self.plane[81] = true -- Pell Silverbolt 6 (not upgraded)
+	self.plane[81] = true -- Pell Silverbolt 6
 	self.plane[85] = true -- Bering I-86DP
 	
 	-- By default, autopilot is made not available in the Peek Airhawk 225
@@ -27,7 +27,7 @@ function Autopilot:__init()
 	
 	-- BEGIN CONFIG --
 	
-	self.config = {
+	self.config = { 
 	
 		["ap"] = {
 			["name"] = "Autopilot",
@@ -43,9 +43,10 @@ function Autopilot:__init()
 			["used_by"] = {"hh", "wh"},
 			["setting"] = 0,
 			["units"] = "°",
-			["min"] = -60,
-			["max"] = 60,
-			["gain"] = 0.08	
+			["min_setting"] = -60, -- Do not set less than -180
+			["max_setting"] = 60, -- Do not set greater than 180
+			["gain"] = 0.20, -- 0.20 default
+			["max_input"] = 0.7 -- Percentage from 0 to 1
 		},
 		
 		["ph"] = {			
@@ -55,9 +56,10 @@ function Autopilot:__init()
 			["used_by"] = {"ah"},
 			["setting"] = 0,
 			["units"] = "°",
-			["min"] = -60,
-			["max"] = 60,
-			["gain"] = 0.50
+			["min_setting"] = -60, -- Do not set less than -90
+			["max_setting"] = 60, -- Do not set greater than 90
+			["gain"] = 0.50, -- 0.50 default
+			["max_input"] = 0.8 -- Percentage from 0 to 1
 		},
 		
 		["hh"] = {			
@@ -67,10 +69,10 @@ function Autopilot:__init()
 			["used_by"] = {"wh"},
 			["setting"] = 0,
 			["units"] = "°",
-			["min"] = 0,
-			["max"] = 360,
-			["gain"] = 2.00,
-			["roll_limit"] = 45 -- Maximum roll angle while HH is active
+			["min_setting"] = 0, -- Do not change
+			["max_setting"] = 360, -- Do not change
+			["gain"] = 2.00, -- 2.00 default
+			["roll_limit"] = 45 -- Maximum roll angle while HH is active, 30 to 60 recommended
 		},
 		
 		["ah"] = {
@@ -80,23 +82,24 @@ function Autopilot:__init()
 			["used_by"] = {},
 			["setting"] = 0,
 			["units"] = " m",
-			["min"] = 0,
-			["max"] = 5000,
-			["gain"] = 0.30,
-			["pitch_limit"] = 45, -- Maximum pitch angle while AH is active
+			["min_setting"] = 0, -- Do not set less than 0
+			["max_setting"] = 5000, -- Planes do not maneuver properly above 5000 m
+			["gain"] = 0.30, -- 0.30 default
+			["pitch_limit"] = 45, -- Maximum pitch angle while AH is active, 30 to 60 recommended
 			["bias"] = 5 -- Correction for gravity
 		},
 		
-		["th"] = {
-			["name"] = "Throttle-Hold",
+		["sh"] = {
+			["name"] = "Speed-Hold",
 			["on"] = false,
 			["uses"] = {},
 			["used_by"] = {},
 			["setting"] = 0,
-			["units"] = " km/h" ,
-			["min"] = 0,
-			["max"] = 700,
-			["gain"] = 0.05,
+			["units"] = " km/h",
+			["min_setting"] = 0, -- Do not set less than 0
+			["max_setting"] = 700, -- Planes rarely exceed 500 km/h without server functions
+			["gain"] = 0.05, -- 0.05 default
+			["max_input"] = 1.0 -- Percentage from 0 to 1
 		},
 		
 		["wh"] = {
@@ -108,16 +111,14 @@ function Autopilot:__init()
 	}
 			
 	-- END CONFIG --
-		
-	self.max_power = 1.0 -- Global maximum input value
-	
+
 	Events:Subscribe("LocalPlayerChat", self, self.Control)
 	Events:Subscribe("Render", self, self.HUD)
 	Events:Subscribe("InputPoll", self, self.RollHold)
 	Events:Subscribe("InputPoll", self, self.PitchHold)
 	Events:Subscribe("InputPoll", self, self.HeadingHold)
 	Events:Subscribe("InputPoll", self, self.AltitudeHold)
-	Events:Subscribe("InputPoll", self, self.ThrottleHold)
+	Events:Subscribe("InputPoll", self, self.SpeedHold)
 	Events:Subscribe("InputPoll", self, self.WaypointHold)
 	Events:Subscribe("ResolutionChange", self, self.ResolutionChange)
 	
@@ -140,7 +141,7 @@ function Autopilot:GetYaw(v)
 end
 
 function Autopilot:GetAltitude(v)
-	return math.max(v:GetPosition().y - 200, 0)
+	return v:GetPosition().y - 200
 end
 
 function Autopilot:GetAirSpeed(v)
@@ -160,18 +161,13 @@ function Autopilot:Control(args) -- Subscribed to LocalPlayerChat
 	local text1 = args.text:split(" ")[1]
 	local text2 = args.text:split(" ")[2]
 	
-	if args.text:split(" ")[3] then
-		Chat:Print("Invalid autopilot command", self.msg_color)
-		return false 
-	end
-	
 	local waypoint, marker = Waypoint:GetPosition()
 	local cmd = text1:split("/")[2]
 	local n = tonumber(text2)
-	
+		
 	if self.config[cmd] then
 		if Autopilot:PanelAvailable() then
-			if not text2 then
+			if #args.text:split(" ") == 1 then
 				if self.config[cmd].on == false then
 					if cmd == "wh" and not marker then
 						Chat:Print("No waypoint set", self.msg_color)
@@ -206,15 +202,15 @@ function Autopilot:Control(args) -- Subscribed to LocalPlayerChat
 						Chat:Print(self.config[cmd].name.." disabled", self.msg_color)
 					end
 				end
-			elseif n and self.config[cmd].setting then
-				if n >= self.config[cmd].min and n <= self.config[cmd].max then
+			elseif n and self.config[cmd].setting and #args.text:split(" ") == 2 then
+				if n >= self.config[cmd].min_setting and n <= self.config[cmd].max_setting then
 					self.config[cmd].setting = n
 					Chat:Print(self.config[cmd].name.." set to "..self.config[cmd].setting, self.msg_color)
 				else
-					Chat:Print("Please enter a number between "..self.config[cmd].min.." and "..self.config[cmd].max, self.msg_color)
+					Chat:Print("Please enter a number between "..self.config[cmd].min_setting.." and "..self.config[cmd].max_setting, self.msg_color)
 				end
-			elseif not n and self.config[cmd].setting then
-				Chat:Print("Please enter a number between "..self.config[cmd].min.." and "..self.config[cmd].max, self.msg_color)
+			elseif not n and self.config[cmd].setting and #args.text:split(" ") == 2 then
+				Chat:Print("Please enter a number between "..self.config[cmd].min_setting.." and "..self.config[cmd].max_setting, self.msg_color)
 			else
 				Chat:Print("Invalid autopilot command", self.msg_color)
 			end
@@ -244,7 +240,7 @@ function Autopilot:HUD() -- Subscribed to Render
 		local pitch_string = self.config.ph.name.." : "..tostringint(self.config.ph.setting)..self.config.ph.units
 		local heading_string = self.config.hh.name.." : "..tostringint(self.config.hh.setting)..self.config.hh.units
 		local altitude_string = self.config.ah.name.." : "..tostringint(self.config.ah.setting)..self.config.ah.units
-		local throttle_string = self.config.th.name.." : "..tostringint(self.config.th.setting)..self.config.th.units
+		local speed_string = self.config.sh.name.." : "..tostringint(self.config.sh.setting)..self.config.sh.units
 		local waypoint_string = self.config.wh.name
 		
 		local line = Vector2(0, self.hud_size)
@@ -254,7 +250,7 @@ function Autopilot:HUD() -- Subscribed to Render
 		Render:DrawText(position + line * 2, pitch_string, Autopilot:HUDColor(self.config.ph.on), self.hud_size)
 		Render:DrawText(position + line * 3, heading_string, Autopilot:HUDColor(self.config.hh.on), self.hud_size)
 		Render:DrawText(position + line * 4, altitude_string, Autopilot:HUDColor(self.config.ah.on), self.hud_size)
-		Render:DrawText(position + line * 5, throttle_string, Autopilot:HUDColor(self.config.th.on), self.hud_size)
+		Render:DrawText(position + line * 5, speed_string, Autopilot:HUDColor(self.config.sh.on), self.hud_size)
 		Render:DrawText(position + line * 6, waypoint_string, Autopilot:HUDColor(self.config.wh.on), self.hud_size)
 		
 	end
@@ -264,8 +260,7 @@ end
 function Autopilot:PanelAvailable()
 
 	if LocalPlayer:InVehicle() then
-		local v = LocalPlayer:GetVehicle()
-		if LocalPlayer == v:GetDriver() and self.plane[v:GetModelId()] then
+		if LocalPlayer == LocalPlayer:GetVehicle():GetDriver() and self.plane[LocalPlayer:GetVehicle():GetModelId()] then
 			return true
 		end
 	end
@@ -280,18 +275,17 @@ function Autopilot:RollHold() -- Subscribed to InputPoll
 
 	if Game:GetState() ~= GUIState.Game or not Autopilot:PanelAvailable() or not self.config.rh.on then return false end
 	
-	local v = LocalPlayer:GetVehicle()
-	local roll = Autopilot:GetRoll(v)
+	local roll = Autopilot:GetRoll(LocalPlayer:GetVehicle())
 	
-	local power = math.abs(roll - self.config.rh.setting) * self.config.rh.gain
-	if power > self.max_power then power = self.max_power end
+	local input = math.abs(roll - self.config.rh.setting) * self.config.rh.gain
+	if input > self.config.rh.max_input then input = self.config.rh.max_input end
 	
 	if self.config.rh.setting < roll then
-		Input:SetValue(Action.PlaneTurnRight, power)
+		Input:SetValue(Action.PlaneTurnRight, input)
 	end
 	
 	if self.config.rh.setting > roll then
-		Input:SetValue(Action.PlaneTurnLeft, power)
+		Input:SetValue(Action.PlaneTurnLeft, input)
 	end
 	
 end
@@ -300,30 +294,29 @@ function Autopilot:PitchHold() -- Subscribed to InputPoll
 
 	if Game:GetState() ~= GUIState.Game or not Autopilot:PanelAvailable() or not self.config.ph.on then return false end
 	
-	local v = LocalPlayer:GetVehicle()
-	local pitch = Autopilot:GetPitch(v)
-	local roll = Autopilot:GetRoll(v)
+	local pitch = Autopilot:GetPitch(LocalPlayer:GetVehicle())
+	local roll = Autopilot:GetRoll(LocalPlayer:GetVehicle())
 	
-	local power = math.abs(pitch - self.config.ph.setting) * self.config.ph.gain
-	if power > self.max_power then power = self.max_power end
+	local input = math.abs(pitch - self.config.ph.setting) * self.config.ph.gain
+	if input > self.config.ph.max_input then input = self.config.ph.max_input end
 	
-	if math.abs(roll) < 90 then
+	if math.abs(roll) < 60 then
 		if self.config.ph.setting > pitch then
-			Input:SetValue(Action.PlanePitchUp, power)
+			Input:SetValue(Action.PlanePitchUp, input)
 		end
 		
 		if self.config.ph.setting < pitch then
-			Input:SetValue(Action.PlanePitchDown, power)
+			Input:SetValue(Action.PlanePitchDown, input)
 		end
 	end
 	
-	if math.abs(roll) >= 90 then
+	if math.abs(roll) > 120 then
 		if self.config.ph.setting > pitch then
-			Input:SetValue(Action.PlanePitchDown, power)
+			Input:SetValue(Action.PlanePitchDown, input)
 		end
 		
 		if self.config.ph.setting < pitch then
-			Input:SetValue(Action.PlanePitchUp, power)
+			Input:SetValue(Action.PlanePitchUp, input)
 		end
 	end
 	
@@ -333,8 +326,7 @@ function Autopilot:HeadingHold() -- Subscribed to InputPoll
 
 	if Game:GetState() ~= GUIState.Game or not Autopilot:PanelAvailable() or not self.config.hh.on then return false end
 	
-	local v = LocalPlayer:GetVehicle()
-	local heading = -Autopilot:GetYaw(v)
+	local heading = -Autopilot:GetYaw(LocalPlayer:GetVehicle())
 	
 	if heading <= 0 then
 		heading = heading + 360
@@ -356,9 +348,7 @@ function Autopilot:AltitudeHold() -- Subscribed to InputPoll
 
 	if Game:GetState() ~= GUIState.Game or not Autopilot:PanelAvailable() or not self.config.ah.on then return false end
 	
-	local v = LocalPlayer:GetVehicle()
-
-	self.config.ph.setting = (self.config.ah.setting - Autopilot:GetAltitude(v) + self.config.ah.bias) * self.config.ah.gain
+	self.config.ph.setting = (self.config.ah.setting - Autopilot:GetAltitude(LocalPlayer:GetVehicle()) + self.config.ah.bias) * self.config.ah.gain
 	
 	if self.config.ph.setting > self.config.ah.pitch_limit then
 		self.config.ph.setting = self.config.ah.pitch_limit
@@ -368,22 +358,20 @@ function Autopilot:AltitudeHold() -- Subscribed to InputPoll
 	
 end
 
-function Autopilot:ThrottleHold() -- Subscribed to InputPoll
+function Autopilot:SpeedHold() -- Subscribed to InputPoll
 
-	if Game:GetState() ~= GUIState.Game or not Autopilot:PanelAvailable() or not self.config.th.on then return false end
+	if Game:GetState() ~= GUIState.Game or not Autopilot:PanelAvailable() or not self.config.sh.on then return false end
 	
-	local v = LocalPlayer:GetVehicle()
+	local air_speed = Autopilot:GetAirSpeed(LocalPlayer:GetVehicle())
 	
-	local air_speed = Autopilot:GetAirSpeed(v)
+	local input = math.abs(air_speed - self.config.sh.setting) * self.config.sh.gain
+	if input > self.config.sh.max_input then input = self.config.sh.max_input end
 	
-	local power = math.abs(air_speed - self.config.th.setting) * self.config.th.gain
-	if power > self.max_power then power = self.max_power end
-	
-	if air_speed < self.config.th.setting then
-		Input:SetValue(Action.PlaneIncTrust, power)
+	if air_speed < self.config.sh.setting then
+		Input:SetValue(Action.PlaneIncTrust, input)
 	end
-	if air_speed > self.config.th.setting then
-		Input:SetValue(Action.PlaneDecTrust, power)
+	if air_speed > self.config.sh.setting then
+		Input:SetValue(Action.PlaneDecTrust, input)
 	end
 	
 end
@@ -403,25 +391,21 @@ function Autopilot:WaypointHold() -- Subscribed to InputPoll
 		return false
 	end
 	
-	local v = LocalPlayer:GetVehicle()
-	local position = v:GetPosition()
-	local heading
-	diffx = position.x - waypoint.x
-	diffy = position.z - waypoint.z
+	local position = LocalPlayer:GetVehicle():GetPosition()
+	local diffx = position.x - waypoint.x
+	local diffy = position.z - waypoint.z
 	
 	angle = math.atan(diffx / diffy)
 	
 	if diffx > 0 and diffy > 0 then
-		heading  = 360 - math.deg(angle)
+		self.config.hh.setting  = 360 - math.deg(angle)
 	elseif diffx < 0 and diffy > 0 then
-		heading = math.abs(math.deg(angle))
+		self.config.hh.setting = math.abs(math.deg(angle))
 	elseif diffx < 0 and diffy < 0 then
-		heading = 180 - math.deg(angle)
+		self.config.hh.setting = 180 - math.deg(angle)
 	elseif diffx > 0 and diffy < 0 then 
-		heading = 180 + math.abs(math.deg(angle))
+		self.config.hh.setting = 180 + math.abs(math.deg(angle))
 	end
-	
-	self.config.hh.setting = heading
 	
 end
 
