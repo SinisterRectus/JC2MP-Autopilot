@@ -4,15 +4,15 @@ class 'Autopilot'
 
 function Autopilot:__init()
 
-	self.plane = {}
-	self.plane[24] = true -- F-33 DragonFly
-	self.plane[30] = true -- Si-47 Leopard
-	self.plane[34] = true -- G9 Eclipse
-	self.plane[39] = true -- Aeroliner 474
-	self.plane[51] = true -- Cassius 192
-	self.plane[59] = false -- Peek Airhawk 225
-	self.plane[81] = true -- Pell Silverbolt 6
-	self.plane[85] = true -- Bering I-86DP
+	self.planes = {}
+	self.planes[24] = true -- F-33 DragonFly
+	self.planes[30] = true -- Si-47 Leopard
+	self.planes[34] = true -- G9 Eclipse
+	self.planes[39] = true -- Aeroliner 474
+	self.planes[51] = true -- Cassius 192
+	self.planes[59] = false -- Peek Airhawk 225
+	self.planes[81] = true -- Pell Silverbolt 6
+	self.planes[85] = true -- Bering I-86DP
 	
 	-- By default, autopilot is made not available in the Peek Airhawk 225
 		
@@ -87,8 +87,8 @@ function Autopilot:__init()
 		}
 	}
 				
-	self.panel_available = false -- Whether you are in a plane with autopilot available
-	self.panel_open = false -- Whether the autopilot panel is open
+	self.panel_available = true -- Whether you are in a plane with autopilot available
+	self.panel_open = true -- Whether the autopilot panel is open
 	
 	self.one_key = true -- If true then Z toggles both the panel and mouse
 	self.panel_toggle_button = "Z"
@@ -98,130 +98,92 @@ function Autopilot:__init()
 	self.screen_width = Render.Width
 	self.text_scale = 0.03
 	
-	self.window_position = Vector2(0.65, 0.05)
-	self.window_size = Vector2(0.3, 0.26)
-	self.window_button_size = Vector2(0.3, 0.11)
-	self.window_button_position = Vector2(0, 0.12)
-	self.window_label_size = Vector2(0.25, 0.12)
-	self.window_slider_size = Vector2(0.28, 0.12) --0.28 0.12
-	
 	self.window = Window.Create()
+	
+	self.window.position = Vector2(0.65, 0.05)
+	self.window.size = Vector2(0.28, 0.26)
+	self.window.button_size = Vector2(0.30, 0.11)
+	self.window.button_position = Vector2(0, 0.12)
+	self.window.label_size = Vector2(0.25, 0.12)
+	self.window.slider_size = Vector2(0.31, 0.12)
+	
 	self.window:SetVisible(self.panel_open)
 	self.window:SetTitle("Autopilot Panel")
 	self.window:SetClosable(false)
 	
-	self.window:SetSizeRel(self.window_size)
-	self.window:SetPositionRel(self.window_position)
+	self.window:SetSizeRel(self.window.size)
+	self.window:SetPositionRel(self.window.position)
 	
-	self.window.ap_button = Button.Create(self.window)
-	self.window.rh_button = Button.Create(self.window)
-	self.window.ph_button = Button.Create(self.window)
-	self.window.hh_button = Button.Create(self.window)
-	self.window.ah_button = Button.Create(self.window)
-	self.window.sh_button = Button.Create(self.window)
-	self.window.wh_button = Button.Create(self.window)
+	self.window.setting = {}
 	
-	self.window.ap_button:SetText(self.config.ap.name)
-	self.window.rh_button:SetText(self.config.rh.name)
-	self.window.ph_button:SetText(self.config.ph.name)
-	self.window.hh_button:SetText(self.config.hh.name)
-	self.window.ah_button:SetText(self.config.ah.name)
-	self.window.sh_button:SetText(self.config.sh.name)
-	self.window.wh_button:SetText(self.config.wh.name)
+	self.window.setting.ap = {}
+	self.window.setting.rh = {}
+	self.window.setting.ph = {}
+	self.window.setting.hh = {}
+	self.window.setting.ah = {}
+	self.window.setting.sh = {}
+	self.window.setting.wh = {}
 	
-	self.window.ap_button:SetToggleable(true)
-	self.window.rh_button:SetToggleable(true)
-	self.window.ph_button:SetToggleable(true)
-	self.window.hh_button:SetToggleable(true)
-	self.window.ah_button:SetToggleable(true)
-	self.window.sh_button:SetToggleable(true)
-	self.window.wh_button:SetToggleable(true)
+	for i,k in pairs(self.window.setting) do
 	
-	self.window.rh_label = Label.Create(self.window)
-	self.window.ph_label = Label.Create(self.window)
-	self.window.hh_label = Label.Create(self.window)
-	self.window.ah_label = Label.Create(self.window)
-	self.window.sh_label = Label.Create(self.window)
+		k.button = Button.Create(self.window)
+		k.button:SetText(self.config[i].name)
+		k.button:SetToggleable(true)
+		
+		if self.config[i].setting then
+			k.label = Label.Create(self.window)
+			k.slider = HorizontalSlider.Create(self.window)
+			k.slider:SetRange(self.config[i].min_setting, self.config[i].max_setting)
+			
+			if self.config[i].step then
+				k.slider:SetClampToNotches(true)
+				k.slider:SetNotchCount((self.config[i].max_setting-self.config[i].min_setting)/self.config.ah.step)
+			end
+			
+			k.inc = Button.Create(self.window)
+			k.dec = Button.Create(self.window)
+			k.inc:SetText("+")
+			k.dec:SetText("-")
+			
+		end
+		
+	end
 	
-	self.window.rh_slider = HorizontalSlider.Create(self.window)
-	self.window.ph_slider = HorizontalSlider.Create(self.window)
-	self.window.hh_slider = HorizontalSlider.Create(self.window)
-	self.window.ah_slider = HorizontalSlider.Create(self.window)
-	self.window.sh_slider = HorizontalSlider.Create(self.window)
+	self.window.setting.ap.button:Subscribe("ToggleOn", self, self.APButtonOn)
+	self.window.setting.rh.button:Subscribe("ToggleOn", self, self.RHButtonOn)
+	self.window.setting.ph.button:Subscribe("ToggleOn", self, self.PHButtonOn)
+	self.window.setting.hh.button:Subscribe("ToggleOn", self, self.HHButtonOn)
+	self.window.setting.ah.button:Subscribe("ToggleOn", self, self.AHButtonOn)
+	self.window.setting.sh.button:Subscribe("ToggleOn", self, self.SHButtonOn)
+	self.window.setting.wh.button:Subscribe("ToggleOn", self, self.WHButtonOn)
 	
-	self.window.rh_slider:SetRange(self.config.rh.min_setting, self.config.rh.max_setting)
-	self.window.ph_slider:SetRange(self.config.ph.min_setting, self.config.ph.max_setting)
-	self.window.hh_slider:SetRange(self.config.hh.min_setting, self.config.hh.max_setting)
-	self.window.ah_slider:SetRange(self.config.ah.min_setting, self.config.ah.max_setting)
-	self.window.sh_slider:SetRange(self.config.sh.min_setting, self.config.sh.max_setting)
+	self.window.setting.ap.button:Subscribe("ToggleOff", self, self.APButtonOff)
+	self.window.setting.rh.button:Subscribe("ToggleOff", self, self.RHButtonOff)
+	self.window.setting.ph.button:Subscribe("ToggleOff", self, self.PHButtonOff)
+	self.window.setting.hh.button:Subscribe("ToggleOff", self, self.HHButtonOff)
+	self.window.setting.ah.button:Subscribe("ToggleOff", self, self.AHButtonOff)
+	self.window.setting.sh.button:Subscribe("ToggleOff", self, self.SHButtonOff)
+	self.window.setting.wh.button:Subscribe("ToggleOff", self, self.WHButtonOff)
 	
-	self.window.ah_slider:SetClampToNotches(true)
-	self.window.sh_slider:SetClampToNotches(true)
+	self.window.setting.rh.slider:Subscribe("ValueChanged", self, self.RHSlider)
+	self.window.setting.ph.slider:Subscribe("ValueChanged", self, self.PHSlider)
+	self.window.setting.hh.slider:Subscribe("ValueChanged", self, self.HHSlider)
+	self.window.setting.ah.slider:Subscribe("ValueChanged", self, self.AHSlider)
+	self.window.setting.sh.slider:Subscribe("ValueChanged", self, self.SHSlider)
 	
-	self.window.ah_slider:SetNotchCount((self.config.ah.max_setting-self.config.ah.min_setting)/self.config.ah.step)
-	self.window.sh_slider:SetNotchCount((self.config.sh.max_setting-self.config.sh.min_setting)/self.config.sh.step)
+	self.window.setting.rh.inc:Subscribe("Press", self, self.RHIncrease)
+	self.window.setting.ph.inc:Subscribe("Press", self, self.PHIncrease)
+	self.window.setting.hh.inc:Subscribe("Press", self, self.HHIncrease)
+	self.window.setting.ah.inc:Subscribe("Press", self, self.AHIncrease)
+	self.window.setting.sh.inc:Subscribe("Press", self, self.SHIncrease)
 	
-	self.window.rh_inc = Button.Create(self.window)
-	self.window.ph_inc = Button.Create(self.window)
-	self.window.hh_inc = Button.Create(self.window)
-	self.window.ah_inc = Button.Create(self.window)
-	self.window.sh_inc = Button.Create(self.window)
+	self.window.setting.rh.dec:Subscribe("Press", self, self.RHDecrease)
+	self.window.setting.ph.dec:Subscribe("Press", self, self.PHDecrease)
+	self.window.setting.hh.dec:Subscribe("Press", self, self.HHDecrease)
+	self.window.setting.ah.dec:Subscribe("Press", self, self.AHDecrease)
+	self.window.setting.sh.dec:Subscribe("Press", self, self.SHDecrease)
 	
-	self.window.rh_inc:SetText("+")
-	self.window.ph_inc:SetText("+")
-	self.window.hh_inc:SetText("+")
-	self.window.ah_inc:SetText("+")
-	self.window.sh_inc:SetText("+")
-	
-	self.window.rh_dec = Button.Create(self.window)
-	self.window.ph_dec = Button.Create(self.window)
-	self.window.hh_dec = Button.Create(self.window)
-	self.window.ah_dec = Button.Create(self.window)
-	self.window.sh_dec = Button.Create(self.window)
-	
-	self.window.rh_dec:SetText("-")
-	self.window.ph_dec:SetText("-")
-	self.window.hh_dec:SetText("-")
-	self.window.ah_dec:SetText("-")
-	self.window.sh_dec:SetText("-")
-	
-	self.window.ap_button:Subscribe("ToggleOn", self, self.APButtonOn)
-	self.window.rh_button:Subscribe("ToggleOn", self, self.RHButtonOn)
-	self.window.ph_button:Subscribe("ToggleOn", self, self.PHButtonOn)
-	self.window.hh_button:Subscribe("ToggleOn", self, self.HHButtonOn)
-	self.window.ah_button:Subscribe("ToggleOn", self, self.AHButtonOn)
-	self.window.sh_button:Subscribe("ToggleOn", self, self.SHButtonOn)
-	self.window.wh_button:Subscribe("ToggleOn", self, self.WHButtonOn)
-	
-	self.window.ap_button:Subscribe("ToggleOff", self, self.APButtonOff)
-	self.window.rh_button:Subscribe("ToggleOff", self, self.RHButtonOff)
-	self.window.ph_button:Subscribe("ToggleOff", self, self.PHButtonOff)
-	self.window.hh_button:Subscribe("ToggleOff", self, self.HHButtonOff)
-	self.window.ah_button:Subscribe("ToggleOff", self, self.AHButtonOff)
-	self.window.sh_button:Subscribe("ToggleOff", self, self.SHButtonOff)
-	self.window.wh_button:Subscribe("ToggleOff", self, self.WHButtonOff)
-	
-	self.window.rh_slider:Subscribe("ValueChanged", self, self.RHSlider)
-	self.window.ph_slider:Subscribe("ValueChanged", self, self.PHSlider)
-	self.window.hh_slider:Subscribe("ValueChanged", self, self.HHSlider)
-	self.window.ah_slider:Subscribe("ValueChanged", self, self.AHSlider)
-	self.window.sh_slider:Subscribe("ValueChanged", self, self.SHSlider)
-	
-	self.window.rh_inc:Subscribe("Press", self, self.RHIncrease)
-	self.window.ph_inc:Subscribe("Press", self, self.PHIncrease)
-	self.window.hh_inc:Subscribe("Press", self, self.HHIncrease)
-	self.window.ah_inc:Subscribe("Press", self, self.AHIncrease)
-	self.window.sh_inc:Subscribe("Press", self, self.SHIncrease)
-	
-	self.window.rh_dec:Subscribe("Press", self, self.RHDecrease)
-	self.window.ph_dec:Subscribe("Press", self, self.PHDecrease)
-	self.window.hh_dec:Subscribe("Press", self, self.HHDecrease)
-	self.window.ah_dec:Subscribe("Press", self, self.AHDecrease)
-	self.window.sh_dec:Subscribe("Press", self, self.SHDecrease)
-	
-	self.window:Subscribe("Render", self, self.ButtonRender)
-	self.window:Subscribe("Render", self, self.LabelRender)
-	self.window:Subscribe("Render", self, self.SliderRender)
+	self.window:Subscribe("Render", self, self.WindowRender)
 	
 	Events:Subscribe("ResolutionChange", self, self.WindowResize)
 	Events:Subscribe("KeyUp", self, self.PanelOpen)
@@ -422,7 +384,7 @@ function Autopilot:PanelOpen(args) -- Subscribed to KeyUp
 end
 
 function Autopilot:InputBlock(args) -- Subscribed to LocalPlayerInput
-	if Mouse:GetVisible() then
+	if self.panel_open then
 		if args.input == 3 or args.input == 4 or args.input == 5 or args.input == 6 or args.input == 138 or args.input == 139 then
 			return false
 		end
@@ -430,149 +392,51 @@ function Autopilot:InputBlock(args) -- Subscribed to LocalPlayerInput
 end
 
 function Autopilot:WindowResize() -- Subscribed to ResolutionChange
-	self.window:SetSizeRel(self.window_size)
-	self.window:SetPositionRel(self.window_position)
+	self.window:SetSizeRel(self.window.size)
+	self.window:SetPositionRel(self.window.position)
 end
 	
-function Autopilot:ButtonRender() -- Subscribed to Window Render
+function Autopilot:WindowRender() -- Subscribed to Window Render
 
 	self.text_size = self.window:GetSize():Length() * self.text_scale
 	
-	self.window.ap_button:SetToggleState(self.config.ap.on)
-	self.window.rh_button:SetToggleState(self.config.rh.on)
-	self.window.ph_button:SetToggleState(self.config.ph.on)
-	self.window.hh_button:SetToggleState(self.config.hh.on)
-	self.window.ah_button:SetToggleState(self.config.ah.on)
-	self.window.sh_button:SetToggleState(self.config.sh.on)
-	self.window.wh_button:SetToggleState(self.config.wh.on)
-
-	self.window.ap_button:SetSizeRel(self.window_button_size)
-	self.window.ap_button:SetTextSize(self.text_size)
-	self.window.ap_button:SetPositionRel(self.window_button_position * 0)
+	self.window.setting.ap.button:SetPositionRel(self.window.button_position * 0)
+	self.window.setting.rh.button:SetPositionRel(self.window.button_position * 1)
+	self.window.setting.ph.button:SetPositionRel(self.window.button_position * 2)
+	self.window.setting.hh.button:SetPositionRel(self.window.button_position * 3)
+	self.window.setting.ah.button:SetPositionRel(self.window.button_position * 4)
+	self.window.setting.sh.button:SetPositionRel(self.window.button_position * 5)
+	self.window.setting.wh.button:SetPositionRel(self.window.button_position * 6)
 	
-	self.window.rh_button:SetText(self.config.rh.name)
-	self.window.rh_button:SetSizeRel(self.window_button_size)
-	self.window.rh_button:SetTextSize(self.text_size)
-	self.window.rh_button:SetPositionRel(self.window_button_position * 1)
+	for i,k in pairs(self.window.setting) do
 	
-	self.window.ph_button:SetText(self.config.ph.name)
-	self.window.ph_button:SetSizeRel(self.window_button_size)
-	self.window.ph_button:SetTextSize(self.text_size)
-	self.window.ph_button:SetPositionRel(self.window_button_position * 2)
+		k.button:SetToggleState(self.config[i].on)
+		k.button:SetText(self.config[i].name)
+		k.button:SetSizeRel(self.window.button_size)
+		k.button:SetTextSize(self.text_size)
+		
+		if self.config[i].setting then
+		
+			k.label:SetText(tostringint(self.config[i].setting)..self.config[i].units)
+			k.label:SetSizeRel(self.window.label_size)
+			k.label:SetTextSize(self.text_size)
+			k.label:SetPositionRel(k.button:GetPositionRel() + Vector2(k.button:GetWidthRel() * 1.1, k.button:GetHeightRel() * 0.32))
+			
+			k.slider:SetValue(self.config[i].setting)
+			k.slider:SetSizeRel(self.window.slider_size)
+			k.slider:SetPositionRel(self.window.setting[i].button:GetPositionRel() + Vector2(self.window.setting[i].button:GetWidthRel() * 1.6, 0))
+			
+			k.dec:SetSizeRel(Vector2(self.window.button_size.x / 4, self.window.button_size.y))
+			k.dec:SetTextSize(self.text_size)
+			k.dec:SetPositionRel(k.button:GetPositionRel() + Vector2(0.81, 0))
+			
+			k.inc:SetSizeRel(Vector2(self.window.button_size.x / 4, self.window.button_size.y))
+			k.inc:SetTextSize(self.text_size)
+			k.inc:SetPositionRel(k.button:GetPositionRel() + Vector2(0.89, 0))
+			
+		end
+	end
 	
-	self.window.hh_button:SetText(self.config.hh.name)
-	self.window.hh_button:SetSizeRel(self.window_button_size)
-	self.window.hh_button:SetTextSize(self.text_size)
-	self.window.hh_button:SetPositionRel(self.window_button_position * 3)
-	
-	self.window.ah_button:SetText(self.config.ah.name)
-	self.window.ah_button:SetSizeRel(self.window_button_size)
-	self.window.ah_button:SetTextSize(self.text_size)
-	self.window.ah_button:SetPositionRel(self.window_button_position * 4)
-	
-	self.window.sh_button:SetText(self.config.sh.name)
-	self.window.sh_button:SetSizeRel(self.window_button_size)
-	self.window.sh_button:SetTextSize(self.text_size)
-	self.window.sh_button:SetPositionRel(self.window_button_position * 5)
-	
-	self.window.wh_button:SetText(self.config.wh.name)
-	self.window.wh_button:SetSizeRel(self.window_button_size)
-	self.window.wh_button:SetTextSize(self.text_size)
-	self.window.wh_button:SetPositionRel(self.window_button_position * 6)
-	
-	self.window.rh_dec:SetSizeRel(self.window_button_size - Vector2(0.2, 0))
-	self.window.rh_dec:SetTextSize(self.text_size)
-	self.window.rh_dec:SetPositionRel(self.window.rh_button:GetPositionRel() + Vector2(0.77, 0))
-	
-	self.window.ph_dec:SetSizeRel(self.window_button_size - Vector2(0.2, 0))
-	self.window.ph_dec:SetTextSize(self.text_size)
-	self.window.ph_dec:SetPositionRel(self.window.ph_button:GetPositionRel() + Vector2(0.77, 0))
-	
-	self.window.hh_dec:SetSizeRel(self.window_button_size - Vector2(0.2, 0))
-	self.window.hh_dec:SetTextSize(self.text_size)
-	self.window.hh_dec:SetPositionRel(self.window.hh_button:GetPositionRel() + Vector2(0.77, 0))
-	
-	self.window.ah_dec:SetSizeRel(self.window_button_size - Vector2(0.2, 0))
-	self.window.ah_dec:SetTextSize(self.text_size)
-	self.window.ah_dec:SetPositionRel(self.window.ah_button:GetPositionRel() + Vector2(0.77, 0))
-	
-	self.window.sh_dec:SetSizeRel(self.window_button_size - Vector2(0.2, 0))
-	self.window.sh_dec:SetTextSize(self.text_size)
-	self.window.sh_dec:SetPositionRel(self.window.sh_button:GetPositionRel() + Vector2(0.77, 0))
-	
-	self.window.rh_inc:SetSizeRel(self.window_button_size - Vector2(0.2, 0))
-	self.window.rh_inc:SetTextSize(self.text_size)
-	self.window.rh_inc:SetPositionRel(self.window.rh_button:GetPositionRel() + Vector2(0.87, 0))
-	
-	self.window.ph_inc:SetSizeRel(self.window_button_size - Vector2(0.2, 0))
-	self.window.ph_inc:SetTextSize(self.text_size)
-	self.window.ph_inc:SetPositionRel(self.window.ph_button:GetPositionRel() + Vector2(0.87, 0))
-	
-	self.window.hh_inc:SetSizeRel(self.window_button_size - Vector2(0.2, 0))
-	self.window.hh_inc:SetTextSize(self.text_size)
-	self.window.hh_inc:SetPositionRel(self.window.hh_button:GetPositionRel() + Vector2(0.87, 0))
-	
-	self.window.ah_inc:SetSizeRel(self.window_button_size - Vector2(0.2, 0))
-	self.window.ah_inc:SetTextSize(self.text_size)
-	self.window.ah_inc:SetPositionRel(self.window.ah_button:GetPositionRel() + Vector2(0.87, 0))
-	
-	self.window.sh_inc:SetSizeRel(self.window_button_size - Vector2(0.2, 0))
-	self.window.sh_inc:SetTextSize(self.text_size)
-	self.window.sh_inc:SetPositionRel(self.window.sh_button:GetPositionRel() + Vector2(0.87, 0))
-end
-
-function Autopilot:LabelRender() -- Subscribed to Window Render
-
-	self.window.rh_label:SetText(tostringint(self.config.rh.setting)..self.config.rh.units)
-	self.window.ph_label:SetText(tostringint(self.config.ph.setting)..self.config.ph.units)
-	self.window.hh_label:SetText(tostringint(self.config.hh.setting)..self.config.hh.units)
-	self.window.ah_label:SetText(tostringint(self.config.ah.setting)..self.config.ah.units)
-	self.window.sh_label:SetText(tostringint(self.config.sh.setting)..self.config.sh.units)
-
-	self.window.rh_label:SetSizeRel(self.window_label_size)
-	self.window.rh_label:SetTextSize(self.text_size)
-	self.window.rh_label:SetPositionRel(self.window.rh_button:GetPositionRel() + Vector2(self.window.rh_button:GetWidthRel() * 1.1, self.window.rh_button:GetHeightRel() * 0.32))
-	
-	self.window.ph_label:SetSizeRel(self.window_label_size)
-	self.window.ph_label:SetTextSize(self.text_size)
-	self.window.ph_label:SetPositionRel(self.window.ph_button:GetPositionRel() + Vector2(self.window.ph_button:GetWidthRel() * 1.1, self.window.ph_button:GetHeightRel() * 0.32))
-	
-	self.window.hh_label:SetSizeRel(self.window_label_size)
-	self.window.hh_label:SetTextSize(self.text_size)
-	self.window.hh_label:SetPositionRel(self.window.hh_button:GetPositionRel() + Vector2(self.window.hh_button:GetWidthRel() * 1.1, self.window.hh_button:GetHeightRel() * 0.32))
-	
-	self.window.ah_label:SetSizeRel(self.window_label_size)
-	self.window.ah_label:SetTextSize(self.text_size)
-	self.window.ah_label:SetPositionRel(self.window.ah_button:GetPositionRel() + Vector2(self.window.ah_button:GetWidthRel() * 1.1, self.window.ah_button:GetHeightRel() * 0.32))
-	
-	self.window.sh_label:SetSizeRel(self.window_label_size)
-	self.window.sh_label:SetTextSize(self.text_size)
-	self.window.sh_label:SetPositionRel(self.window.sh_button:GetPositionRel() + Vector2(self.window.sh_button:GetWidthRel() * 1.1, self.window.sh_button:GetHeightRel() * 0.32))
-
-end
-
-function Autopilot:SliderRender() -- Subscribed to Window Render
-
-	self.window.rh_slider:SetValue(self.config.rh.setting)
-	self.window.rh_slider:SetSizeRel(self.window_slider_size)
-	self.window.rh_slider:SetPositionRel(self.window.rh_button:GetPositionRel() + Vector2(self.window.rh_button:GetWidthRel() * 1.6, 0))
-	
-	self.window.ph_slider:SetValue(self.config.ph.setting)	
-	self.window.ph_slider:SetSizeRel(self.window_slider_size)
-	self.window.ph_slider:SetPositionRel(self.window.ph_button:GetPositionRel() + Vector2(self.window.ph_button:GetWidthRel() * 1.6, 0))
-	
-	self.window.hh_slider:SetValue(self.config.hh.setting)
-	self.window.hh_slider:SetSizeRel(self.window_slider_size)
-	self.window.hh_slider:SetPositionRel(self.window.hh_button:GetPositionRel() + Vector2(self.window.hh_button:GetWidthRel() * 1.6, 0))
-	
-	self.window.ah_slider:SetValue(self.config.ah.setting)
-	self.window.ah_slider:SetSizeRel(self.window_slider_size)
-	self.window.ah_slider:SetPositionRel(self.window.ah_button:GetPositionRel() + Vector2(self.window.ah_button:GetWidthRel() * 1.6, 0))
-	
-	self.window.sh_slider:SetValue(self.config.sh.setting)
-	self.window.sh_slider:SetSizeRel(self.window_slider_size)
-	self.window.sh_slider:SetPositionRel(self.window.sh_button:GetPositionRel() + Vector2(self.window.sh_button:GetWidthRel() * 1.6, 0))
-
 end
 
 function tostringint(n)
@@ -609,7 +473,7 @@ end
 
 function Autopilot:PanelAvailable() -- Subscribed to PreTick
 
-	if LocalPlayer:InVehicle() and LocalPlayer == LocalPlayer:GetVehicle():GetDriver() and self.plane[LocalPlayer:GetVehicle():GetModelId()] then
+	if LocalPlayer:InVehicle() and LocalPlayer == LocalPlayer:GetVehicle():GetDriver() and self.planes[LocalPlayer:GetVehicle():GetModelId()] then
 		self.panel_available = true
 	else
 		self.panel_available = false
@@ -744,9 +608,8 @@ function Autopilot:WaypointHold() -- Subscribed to InputPoll
 	
 	if not marker then
 		self.config.wh.on = false
-		for i,k in ipairs(self.config.wh.uses) do
-			self.config[k].on = false
-		end
+		self.config.hh.on = false
+		self.config.rh.on = false
 		return false
 	end
 	
