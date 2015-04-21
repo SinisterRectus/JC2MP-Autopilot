@@ -87,10 +87,10 @@ function Autopilot:__init()
 		}
 	}
 				
-	self.panel_available = true -- Whether you are in a plane with autopilot available
-	self.panel_open = true -- Whether the autopilot panel is open
+	self.panel_available = false -- Whether you are in a plane with autopilot available
+	self.panel_open = false -- Whether the autopilot panel is open
 	
-	self.one_key = true -- If true then Z toggles both the panel and mouse
+	self.two_keys = false -- If false then Z toggles both the panel and mouse
 	self.panel_toggle_button = "Z"
 	self.mouse_toggle_button = "M"
 	
@@ -124,26 +124,26 @@ function Autopilot:__init()
 	self.window.setting.sh = {}
 	self.window.setting.wh = {}
 	
-	for i,k in pairs(self.window.setting) do
+	for k,v in pairs(self.window.setting) do
 	
-		k.button = Button.Create(self.window)
-		k.button:SetText(self.config[i].name)
-		k.button:SetToggleable(true)
+		v.button = Button.Create(self.window)
+		v.button:SetText(self.config[k].name)
+		v.button:SetToggleable(true)
 		
-		if self.config[i].setting then
-			k.label = Label.Create(self.window)
-			k.slider = HorizontalSlider.Create(self.window)
-			k.slider:SetRange(self.config[i].min_setting, self.config[i].max_setting)
+		if self.config[k].setting then
+			v.label = Label.Create(self.window)
+			v.slider = HorizontalSlider.Create(self.window)
+			v.slider:SetRange(self.config[k].min_setting, self.config[k].max_setting)
 			
-			if self.config[i].step then
-				k.slider:SetClampToNotches(true)
-				k.slider:SetNotchCount((self.config[i].max_setting-self.config[i].min_setting)/self.config.ah.step)
+			if self.config[k].step then
+				v.slider:SetClampToNotches(true)
+				v.slider:SetNotchCount((self.config[k].max_setting-self.config[k].min_setting)/self.config[k].step)
 			end
 			
-			k.inc = Button.Create(self.window)
-			k.dec = Button.Create(self.window)
-			k.inc:SetText("+")
-			k.dec:SetText("-")
+			v.inc = Button.Create(self.window)
+			v.dec = Button.Create(self.window)
+			v.inc:SetText("+")
+			v.dec:SetText("-")
 			
 		end
 		
@@ -364,14 +364,8 @@ function Autopilot:WHButtonOff()
 end
 
 function Autopilot:PanelOpen(args) -- Subscribed to KeyUp
-	if self.one_key then
-	
-		if args.key == string.byte(self.panel_toggle_button) and self.panel_available then
-			self.panel_open = not self.panel_open
-			Mouse:SetVisible(self.panel_open)
-		end
-		
-	elseif not self.one_key then
+
+	if self.two_keys then
 	
 		if args.key == string.byte(self.panel_toggle_button) and self.panel_available then
 			self.panel_open = not self.panel_open
@@ -380,11 +374,20 @@ function Autopilot:PanelOpen(args) -- Subscribed to KeyUp
 		if args.key == string.byte(self.mouse_toggle_button) and self.panel_available then
 			Mouse:SetVisible(not Mouse:GetVisible())
 		end
+		
+	else
+	
+		if args.key == string.byte(self.panel_toggle_button) and self.panel_available then
+			self.panel_open = not self.panel_open
+			Mouse:SetVisible(self.panel_open)
+		end
+		
 	end
+	
 end
 
 function Autopilot:InputBlock(args) -- Subscribed to LocalPlayerInput
-	if self.panel_open then
+	if Mouse:GetVisible() then
 		if args.input == 3 or args.input == 4 or args.input == 5 or args.input == 6 or args.input == 138 or args.input == 139 then
 			return false
 		end
@@ -408,31 +411,31 @@ function Autopilot:WindowRender() -- Subscribed to Window Render
 	self.window.setting.sh.button:SetPositionRel(self.window.button_position * 5)
 	self.window.setting.wh.button:SetPositionRel(self.window.button_position * 6)
 	
-	for i,k in pairs(self.window.setting) do
+	for k,v in pairs(self.window.setting) do
 	
-		k.button:SetToggleState(self.config[i].on)
-		k.button:SetText(self.config[i].name)
-		k.button:SetSizeRel(self.window.button_size)
-		k.button:SetTextSize(self.text_size)
+		v.button:SetToggleState(self.config[k].on)
+		v.button:SetText(self.config[k].name)
+		v.button:SetSizeRel(self.window.button_size)
+		v.button:SetTextSize(self.text_size)
 		
-		if self.config[i].setting then
+		if self.config[k].setting then
 		
-			k.label:SetText(tostringint(self.config[i].setting)..self.config[i].units)
-			k.label:SetSizeRel(self.window.label_size)
-			k.label:SetTextSize(self.text_size)
-			k.label:SetPositionRel(k.button:GetPositionRel() + Vector2(k.button:GetWidthRel() * 1.1, k.button:GetHeightRel() * 0.32))
+			v.label:SetText(tostringint(self.config[k].setting)..self.config[k].units)
+			v.label:SetSizeRel(self.window.label_size)
+			v.label:SetTextSize(self.text_size)
+			v.label:SetPositionRel(v.button:GetPositionRel() + Vector2(v.button:GetWidthRel() * 1.1, v.button:GetHeightRel() * 0.32))
 			
-			k.slider:SetValue(self.config[i].setting)
-			k.slider:SetSizeRel(self.window.slider_size)
-			k.slider:SetPositionRel(self.window.setting[i].button:GetPositionRel() + Vector2(self.window.setting[i].button:GetWidthRel() * 1.6, 0))
+			v.slider:SetValue(self.config[k].setting)
+			v.slider:SetSizeRel(self.window.slider_size)
+			v.slider:SetPositionRel(self.window.setting[k].button:GetPositionRel() + Vector2(self.window.setting[k].button:GetWidthRel() * 1.6, 0))
 			
-			k.dec:SetSizeRel(Vector2(self.window.button_size.x / 4, self.window.button_size.y))
-			k.dec:SetTextSize(self.text_size)
-			k.dec:SetPositionRel(k.button:GetPositionRel() + Vector2(0.81, 0))
+			v.dec:SetSizeRel(Vector2(self.window.button_size.x / 4, self.window.button_size.y))
+			v.dec:SetTextSize(self.text_size)
+			v.dec:SetPositionRel(v.button:GetPositionRel() + Vector2(0.81, 0))
 			
-			k.inc:SetSizeRel(Vector2(self.window.button_size.x / 4, self.window.button_size.y))
-			k.inc:SetTextSize(self.text_size)
-			k.inc:SetPositionRel(k.button:GetPositionRel() + Vector2(0.89, 0))
+			v.inc:SetSizeRel(Vector2(self.window.button_size.x / 4, self.window.button_size.y))
+			v.inc:SetTextSize(self.text_size)
+			v.inc:SetPositionRel(v.button:GetPositionRel() + Vector2(0.89, 0))
 			
 		end
 	end
@@ -489,7 +492,7 @@ function Autopilot:PanelAvailable() -- Subscribed to PreTick
 	if not self.panel_available then
 		self.panel_open = false
 		for i,k in pairs(self.config) do
-			self.config[i].on = false
+			self.config[k].on = false
 		end
 		Mouse:SetVisible(false)
 	end
