@@ -231,7 +231,7 @@ function Autopilot:__init()
 	self.window:Subscribe("Resize", self, self.WindowResize)
 	
 	Events:Subscribe("ModuleLoad", self, self.WindowResize)
-	Events:Subscribe("ResolutionChange", self, self.WindowResize)
+	Events:Subscribe("ResolutionChange", self, self.ResolutionChange)
 	Events:Subscribe("KeyUp", self, self.PanelOpen)
 	Events:Subscribe("LocalPlayerInput", self, self.InputBlock)
 	Events:Subscribe("LocalPlayerEnterVehicle", self, self.EnterPlane)
@@ -472,11 +472,14 @@ function Autopilot:InputBlock(args) -- Subscribed to LocalPlayerInput
 		end
 	end	
 end
-	
-function Autopilot:WindowResize() -- Subscribed to ModuleLoad, Window Resize, and ResolutionChange
 
+function Autopilot:ResolutionChange() -- Subscribe to ResolutionChange
 	self.window:SetSizeRel(self.window.size)
 	self.window:SetPositionRel(self.window.position)
+	self:WindowResize()
+end
+	
+function Autopilot:WindowResize() -- Subscribed to ModuleLoad and Window Resize
 
 	self.text_size = self.window:GetSize():Length() * self.text_scale
 	
