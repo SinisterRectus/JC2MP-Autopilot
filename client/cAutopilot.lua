@@ -203,6 +203,217 @@ function Autopilot:__init()
 				["glide_pitch"] = 4,
 				["cone_angle"] = 10
 			}
+		},
+		["Pulau Dayang Terlena"] = {
+			["03L"] = {
+				["near_marker"] = Vector3(-12238.39, 610.94, 4664.57),
+				["far_marker"] = Vector3(-11970.58, 610.94, 4162.33),
+				["glide_length"] = 5000,
+				["glide_pitch"] = 6,
+				["cone_angle"] = 10
+			},
+			["21R"] = {
+				["near_marker"] = Vector3(-11970.58, 610.94, 4162.33),
+				["far_marker"] = Vector3(-12238.39, 610.94, 4664.57),
+				["glide_length"] = 5000,
+				["glide_pitch"] = 3,
+				["cone_angle"] = 10
+			},
+			["03R"] = {
+				["near_marker"] = Vector3(-12101.96, 611.10, 4737.54),
+				["far_marker"] = Vector3(-11834.03, 611.10, 4236.06),
+				["glide_length"] = 5000,
+				["glide_pitch"] = 6,
+				["cone_angle"] = 10
+			},
+			["21L"] = {
+				["near_marker"] = Vector3(-11834.03, 611.10, 4236.06),
+				["far_marker"] = Vector3(-12101.96, 611.10, 4737.54),
+				["glide_length"] = 5000,
+				["glide_pitch"] = 3,
+				["cone_angle"] = 10
+			},
+			["12"] = {
+				["near_marker"] = Vector3(-12196.25, 611.22, 4874.13),
+				["far_marker"] = Vector3(-11693.96, 611.22, 5142.52),
+				["glide_length"] = 5000,
+				["glide_pitch"] = 3,
+				["cone_angle"] = 15
+			},
+			["30"] = {
+				["near_marker"] = Vector3(-11693.96, 611.22, 5142.52),
+				["far_marker"] = Vector3(-12196.25, 611.22, 4874.13),
+				["glide_length"] = 5000,
+				["glide_pitch"] = 3,
+				["cone_angle"] = 15
+			},
+		},
+		["Kem Jalan Merpati"] = {
+			["30"] = {
+				["near_marker"] = Vector3(-6643.80, 1050.34, 11950.66),
+				["far_marker"] = Vector3(-7131.25, 1050.34, 11658.72),
+				["glide_length"] = 5000,
+				["glide_pitch"] = 3,
+				["cone_angle"] = 15
+			}
+		},
+		["Kem Udara Wau Pantas"] = {
+			["27"] = {
+				["near_marker"] = Vector3(6140.61, 251.00, 7158.83),
+				["far_marker"] = Vector3(5573.50, 251.00, 7158.61),				
+				["glide_length"] = 5000,
+				["glide_pitch"] = 3,
+				["cone_angle"] = 15
+			},
+			["09"] = {
+				["near_marker"] = Vector3(5573.50, 251.00, 7158.61),
+				["far_marker"] = Vector3(6140.61, 251.00, 7158.83),
+				["glide_length"] = 5000,
+				["glide_pitch"] = 3,
+				["cone_angle"] = 15
+			},
+			["36"] = {
+				["near_marker"] = Vector3(6044.50, 251.00, 6996.85),
+				["far_marker"] = Vector3(6044.50, 251.00, 6428.61),
+				["glide_length"] = 5000,
+				["glide_pitch"] = 3,
+				["cone_angle"] = 15
+			},
+			["18"] = {
+				["near_marker"] = Vector3(6044.50, 251.00, 6428.61),
+				["far_marker"] = Vector3(6044.50, 251.00, 6996.85),
+				["glide_length"] = 1500,
+				["glide_pitch"] = 3,
+				["cone_angle"] = 15
+			}		
+		},
+		["Pulau Dongeng"] = {
+			["12"] = {
+				["near_marker"] = Vector3(5696.48, 264.18, 10363.78),
+				["far_marker"] = Vector3(5863.38, 264.18, 10460.01),
+				["glide_length"] = 2000,
+				["glide_pitch"] = 4,
+				["cone_angle"] = 15
+			}
+		},
+		["Tanah Lebar"] = {
+			["28R"] = {
+				["near_marker"] = Vector3(-160.40, 295.36, 7089.45),
+				["far_marker"] = Vector3(-351.18, 295.36, 7060.66),
+				["glide_length"] = 5000,
+				["glide_pitch"] = 6,
+				["cone_angle"] = 6
+			},
+			["28L"] = {
+				["near_marker"] = Vector3(-169.66, 295.35, 7148.39),
+				["far_marker"] = Vector3(-358.35, 295.35, 7119.41),
+				["glide_length"] = 5000,
+				["glide_pitch"] = 6,
+				["cone_angle"] = 6
+			}
+		},
+		["Kampung Tujuh Telaga"] = {
+			["14"] = {
+				["near_marker"] = Vector3(595.28, 207.06, -98.16),
+				["far_marker"] = Vector3(748.07, 208.15, 58.73),
+				["glide_length"] = 5000,
+				["glide_pitch"] = 3,
+				["cone_angle"] = 15
+			}
+		},
+		["Teluk Permata"] = {
+			["14"] = {
+				["near_marker"] = Vector3(-7123.66, 207.01, -10822.38),
+				["far_marker"] = Vector3(-6837.64, 207.01, -10636.57),
+				["glide_length"] = 5000,
+				["glide_pitch"] = 3,
+				["cone_angle"] = 15
+			}
+		},
+		["Banjaran Gundin"] = {
+			["23"] = {
+				["near_marker"] = Vector3(-4610.55, 405.64, -11649.26),
+				["far_marker"] = Vector3(-5012.30, 405.64, -11247.39),
+				["glide_length"] = 5000,
+				["glide_pitch"] = 5,
+				["cone_angle"] = 15
+			},
+			["45"] = {
+				["near_marker"] = Vector3(-5012.30, 405.64, -11247.39),
+				["far_marker"] = Vector3(-4610.55, 405.64, -11649.26),
+				["glide_length"] = 5000,
+				["glide_pitch"] = 5,
+				["cone_angle"] = 12
+			}
+		},
+		["Sungai Cengkih Besar"] = {
+			["20"] = {
+				["near_marker"] = Vector3(4706.35, 208.40, -10989.74),
+				["far_marker"] = Vector3(4477.04, 208.40, -10467.98),				
+				["glide_length"] = 5000,
+				["glide_pitch"] = 3,
+				["cone_angle"] = 15
+			},
+			["29"] = {
+				["near_marker"] = Vector3(4667.72, 208.44, -10624.48),
+				["far_marker"] = Vector3(4147.00, 208.44, -10853.32),				
+				["glide_length"] = 5000,
+				["glide_pitch"] = 3,
+				["cone_angle"] = 15
+			},
+			["11"] = {
+				["near_marker"] = Vector3(4147.00, 208.44, -10853.32),
+				["far_marker"] = Vector3(4667.72, 208.44, -10624.48),				
+				["glide_length"] = 5000,
+				["glide_pitch"] = 3,
+				["cone_angle"] = 15
+			}
+		},
+		["Paya Luas"] = {
+			["27"] = {
+				["near_marker"] = Vector3(12011.65, 206.88, -10715.07),
+				["far_marker"] = Vector3(11440.75, 206.88, -10715.09),				
+				["glide_length"] = 5000,
+				["glide_pitch"] = 3,
+				["cone_angle"] = 15
+			},
+			["09"] = {
+				["near_marker"] = Vector3(11440.75, 206.88, -10715.09),
+				["far_marker"] = Vector3(12011.65, 206.88, -10715.07),
+				["glide_length"] = 5000,
+				["glide_pitch"] = 3,
+				["cone_angle"] = 15
+			},
+			["36"] = {
+				["near_marker"] = Vector3(12171.29, 206.88, -10243.73),
+				["far_marker"] = Vector3(12171.29, 206.88, -10812.65),
+				["glide_length"] = 5000,
+				["glide_pitch"] = 3,
+				["cone_angle"] = 15
+			},
+			["18"] = {
+				["near_marker"] = Vector3(12171.26, 206.88, -10812.65),
+				["far_marker"] = Vector3(12171.26, 206.88, -10243.73),
+				["glide_length"] = 1500,
+				["glide_pitch"] = 3,
+				["cone_angle"] = 15
+			}			
+		},
+		["Lemabah Delima"] = {
+			["13"] = {
+				["near_marker"] = Vector3(9460.27, 204.78, 3661.23),
+				["far_marker"] = Vector3(9890.33, 204.78, 4031.97),
+				["glide_length"] = 5000,
+				["glide_pitch"] = 3,
+				["cone_angle"] = 15
+			},
+			["31"] = {
+				["near_marker"] = Vector3(9890.33, 204.78, 4032.38),
+				["far_marker"] = Vector3(9460.27, 204.78, 3661.23),
+				["glide_length"] = 5000,
+				["glide_pitch"] = 3,
+				["cone_angle"] = 15
+			}
 		}
 	}
 	
@@ -228,14 +439,15 @@ function Autopilot:__init()
 	Events:Subscribe("LocalPlayerInput", self, self.InputBlock)
 	Events:Subscribe("LocalPlayerEnterVehicle", self, self.EnterPlane)
 	Events:Subscribe("LocalPlayerExitVehicle", self, self.ExitPlane)
+	Events:Subscribe("EntityDespawn", self, self.PlaneDespawn)
 	Events:Subscribe("InputPoll", self, self.RollHold)
 	Events:Subscribe("InputPoll", self, self.PitchHold)
-	Events:Subscribe("InputPoll", self, self.HeadingHold) -- Can be delayed
-	Events:Subscribe("InputPoll", self, self.AltitudeHold) -- Can be delayed
+	Events:Subscribe("InputPoll", self, self.HeadingHold)
+	Events:Subscribe("InputPoll", self, self.AltitudeHold)
 	Events:Subscribe("InputPoll", self, self.SpeedHold)
-	Events:Subscribe("InputPoll", self, self.WaypointHold) -- Can be delayed
-	Events:Subscribe("InputPoll", self, self.ApproachHold) -- Can be delayed
-	Events:Subscribe("InputPoll", self, self.TargetHold) -- Can be delayed
+	Events:Subscribe("InputPoll", self, self.WaypointHold)
+	Events:Subscribe("InputPoll", self, self.ApproachHold)
+	Events:Subscribe("InputPoll", self, self.TargetHold)
 	
 end
 
@@ -514,17 +726,15 @@ function Autopilot:OHOn()
 	local nearest_marker_distance = math.huge
 	
 	for airport,runways in pairs(self.airports) do
-		for runway,_ in pairs(runways) do
+		for runway in pairs(runways) do
 		
 			local near_marker = self.airports[airport][runway].near_marker
 			local far_marker = self.airports[airport][runway].far_marker
 			local distance = Vector3.Distance(position, near_marker)
 				
-			if distance < self.airports[airport][runway].glide_length then
+			if distance < self.airports[airport][runway].glide_length and distance < nearest_marker_distance then
 			
-				local dx = near_marker.x - position.x
 				local dy = near_marker.y - position.y
-				local dz = near_marker.z - position.z
 				
 				local runway_cone_angle = self.airports[airport][runway].cone_angle
 				local pitch_to_plane = math.deg(math.asin(-dy / distance))
@@ -532,6 +742,9 @@ function Autopilot:OHOn()
 				local pitch_difference1 = self:DegreesDifference(pitch_to_plane, pitch_from_runway)
 				
 				if math.abs(pitch_difference1) < 0.5 * runway_cone_angle then
+				
+					local dx = near_marker.x - position.x
+					local dz = near_marker.z - position.z
 
 					local heading_to_plane = self:YawToHeading(math.deg(math.atan2(dx, dz)))
 					local heading_from_runway = self:YawToHeading(math.deg(math.atan2(far_marker.x - near_marker.x, far_marker.z - near_marker.z)))
@@ -552,13 +765,11 @@ function Autopilot:OHOn()
 					
 							if math.abs(heading_difference2) < 0.5 * plane_cone_angle then
 
-								if distance < nearest_marker_distance then
-									nearest_marker_distance = distance
-									nearest_marker = near_marker
-									airport_name = airport
-									runway_name = runway
-									runway_direction = heading_from_runway
-								end
+								nearest_marker_distance = distance
+								nearest_marker = near_marker
+								airport_name = airport
+								runway_name = runway
+								runway_direction = heading_from_runway
 								
 							end
 							
@@ -609,10 +820,8 @@ function Autopilot:THOn()
 				local vehicle_distance = Vector3.Distance(local_position, vehicle_position)
 				
 				if vehicle_distance < nearest_target_distance then
-				
-					local dx = vehicle_position.x - local_position.x
+
 					local dy = vehicle_position.y - local_position.y
-					local dz = vehicle_position.z - local_position.z
 				
 					local plane_cone_angle = self.planes[self.model].cone_angle
 					local pitch_to_target = math.deg(math.asin(dy / vehicle_distance))
@@ -620,6 +829,9 @@ function Autopilot:THOn()
 					local pitch_difference = self:DegreesDifference(pitch_to_target, pitch_from_plane)
 					
 					if math.abs(pitch_difference) < 0.5 * plane_cone_angle then
+					
+						local dx = vehicle_position.x - local_position.x
+						local dz = vehicle_position.z - local_position.z
 				
 						local heading_to_target = self:YawToHeading(math.deg(math.atan2(-dx, -dz)))
 						local heading_from_plane = self:GetHeading()
@@ -724,11 +936,13 @@ function Autopilot:OHOff()
 end
 
 function Autopilot:THOff()
-	self:HHOff()
-	self:PHOff()
-	self:SHOff()
-	self.target = nil
-	self.config.th.on = false
+	if self.config.th.on then
+		self:HHOff()
+		self:PHOff()
+		self:SHOff()
+		self.target = nil
+		self.config.th.on = false
+	end
 end
 
 function Autopilot:PanelOpen(args) -- Subscribed to KeyUp
@@ -909,7 +1123,7 @@ function Autopilot:GetGroundSpeed()
 end
 
 function Autopilot:EnterPlane(args)
-
+	
 	local model = args.vehicle:GetModelId()
 	if self.planes[model] then
 		if self.planes[model].available then
@@ -935,9 +1149,31 @@ function Autopilot:ExitPlane(args)
 
 end
 
+function Autopilot:PlaneDespawn(args)
+
+	if args.entity.__type == "Vehicle" then
+		if IsValid(args.entity) then
+			if args.entity:GetDriver() == LocalPlayer then
+				local model = args.entity:GetModelId()
+				if self.planes[model] then
+					if self.panel_available then
+						self:APOff()
+						self.panel_available = false
+						self.vehicle = nil
+						self.model = nil
+						self.window:SetVisible(false)
+						Mouse:SetVisible(false)
+					end
+				end
+			end
+		end
+	end
+
+end
+
 function Autopilot:RollHold() -- Subscribed to InputPoll
 
-	if Game:GetState() ~= GUIState.Game or not self.panel_available or not self.config.rh.on then return end	
+	if Game:GetState() ~= GUIState.Game or not self.panel_available or not self.config.rh.on or not IsValid(self.vehicle) then return end	
 	
 	local roll = self:GetRoll()
 	
@@ -956,7 +1192,7 @@ end
 
 function Autopilot:PitchHold() -- Subscribed to InputPoll
 
-	if Game:GetState() ~= GUIState.Game or not self.panel_available or not self.config.ph.on then return end
+	if Game:GetState() ~= GUIState.Game or not self.panel_available or not self.config.ph.on or not IsValid(self.vehicle) then return end
 	
 	local pitch = self:GetPitch()
 	local roll = self:GetRoll()
@@ -990,7 +1226,7 @@ end
 
 function Autopilot:HeadingHold() -- Subscribed to InputPoll
 
-	if Game:GetState() ~= GUIState.Game or not self.panel_available or not self.config.hh.on then return end
+	if Game:GetState() ~= GUIState.Game or not self.panel_available or not self.config.hh.on or not IsValid(self.vehicle) then return end
 	
 	local heading = self:GetHeading()
 	
@@ -1008,7 +1244,7 @@ end
 
 function Autopilot:AltitudeHold() -- Subscribed to InputPoll
 
-	if Game:GetState() ~= GUIState.Game or not self.panel_available or not self.config.ah.on then return end
+	if Game:GetState() ~= GUIState.Game or not self.panel_available or not self.config.ah.on or not IsValid(self.vehicle) then return end
 	
 	self.config.ph.setting = (self.config.ah.setting - Autopilot:GetAltitude() + self.config.ah.bias) * self.config.ah.gain
 	
@@ -1022,7 +1258,7 @@ end
 
 function Autopilot:SpeedHold() -- Subscribed to InputPoll
 
-	if Game:GetState() ~= GUIState.Game or not self.panel_available or not self.config.sh.on then return end
+	if Game:GetState() ~= GUIState.Game or not self.panel_available or not self.config.sh.on or not IsValid(self.vehicle) then return end
 		
 	local air_speed = self:GetAirSpeed()
 	
@@ -1040,7 +1276,7 @@ end
 
 function Autopilot:WaypointHold() -- Subscribed to InputPoll
 
-	if Game:GetState() ~= GUIState.Game or not self.panel_available or not self.config.wh.on then return end
+	if Game:GetState() ~= GUIState.Game or not self.panel_available or not self.config.wh.on or not IsValid(self.vehicle) then return end
 	
 	local waypoint, marker = Waypoint:GetPosition()
 	
@@ -1055,7 +1291,7 @@ end
 
 function Autopilot:ApproachHold() -- Subscribed to InputPoll
 
-	if Game:GetState() ~= GUIState.Game or not self.panel_available or not self.config.oh.on then return end
+	if Game:GetState() ~= GUIState.Game or not self.panel_available or not self.config.oh.on or not IsValid(self.vehicle) then return end
 	
 	local position = self.vehicle:GetPosition()
 	
@@ -1063,7 +1299,7 @@ function Autopilot:ApproachHold() -- Subscribed to InputPoll
 		local distance = Vector3.Distance(self.approach.near_marker, position)
 		if distance > self.planes[self.model].flare_distance then
 			self.approach.farpoint = self.approach.near_marker + self.approach.angle * Vector3.Forward * distance
-			self.config.ah.setting = self.approach.farpoint.y - 200 - self.config.ah.bias
+			self.config.ah.setting = self.approach.farpoint.y - 200
 			self.config.sh.setting = math.min(math.lerp(self.planes[self.model].landing_speed, self.planes[self.model].cruise_speed, distance / self.planes[self.model].slow_distance), self.planes[self.model].cruise_speed)
 			self.approach.target = math.lerp(self.approach.near_marker, self.approach.farpoint, 0.5)
 			self:FollowTargetXZ(self.approach.target)
@@ -1086,24 +1322,24 @@ end
 
 function Autopilot:TargetHold() -- Subscribed to InputPoll
 
-	if Game:GetState() ~= GUIState.Game or not self.panel_available or not self.config.th.on then return end
+	if Game:GetState() ~= GUIState.Game or not self.panel_available or not self.config.th.on or not IsValid(self.vehicle) then return end
 	
-	if not IsValid(self.target.vehicle) then
+	if not IsValid(self.target.vehicle) or not self.target.vehicle:GetDriver() then
 		Chat:Print("Target lost.", Color.Orange)
 		self:THOff()
 		return
 	end
 	
-	local target = self.target.vehicle:GetPosition()
+	local target_position = self.target.vehicle:GetPosition()
+	local target_airspeed = self.target.vehicle:GetLinearVelocity():Length() * 3.6
 	local position = LocalPlayer:GetPosition()
-	local distance = Vector3.Distance(target, position)
-	
+	local distance = Vector3.Distance(target_position, position)
 	local bias = distance / self.target.follow_distance
 	
 	self.config.sh.setting = math.clamp(bias * self.target.vehicle:GetLinearVelocity():Length() * 3.6, self.config.sh.min_setting, self.config.sh.max_setting)
 	
-	self:FollowTargetXZ(target)
-	self:FollowTargetY(target)
+	self:FollowTargetXZ(target_position)
+	self:FollowTargetY(target_position)
 
 end
 
