@@ -1299,7 +1299,7 @@ function Autopilot:ApproachHold() -- Subscribed to InputPoll
 		local distance = Vector3.Distance(self.approach.near_marker, position)
 		if distance > self.planes[self.model].flare_distance then
 			self.approach.farpoint = self.approach.near_marker + self.approach.angle * Vector3.Forward * distance
-			self.config.ah.setting = self.approach.farpoint.y - 200
+			self.config.ah.setting = self.approach.farpoint.y - 200 - self.config.ah.bias
 			self.config.sh.setting = math.min(math.lerp(self.planes[self.model].landing_speed, self.planes[self.model].cruise_speed, distance / self.planes[self.model].slow_distance), self.planes[self.model].cruise_speed)
 			self.approach.target = math.lerp(self.approach.near_marker, self.approach.farpoint, 0.5)
 			self:FollowTargetXZ(self.approach.target)
@@ -1331,7 +1331,6 @@ function Autopilot:TargetHold() -- Subscribed to InputPoll
 	end
 	
 	local target_position = self.target.vehicle:GetPosition()
-	local target_airspeed = self.target.vehicle:GetLinearVelocity():Length() * 3.6
 	local position = LocalPlayer:GetPosition()
 	local distance = Vector3.Distance(target_position, position)
 	local bias = distance / self.target.follow_distance
