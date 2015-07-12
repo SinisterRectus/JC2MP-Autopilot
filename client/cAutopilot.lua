@@ -340,7 +340,7 @@ function Autopilot:THOn()
 	
 	for vehicle in Client:GetVehicles() do
 	
-		if --[[vehicle:GetDriver() and]] vehicle ~= local_vehicle then
+		if vehicle:GetDriver() and vehicle ~= local_vehicle then
 	
 			local model = vehicle:GetModelId()
 			if planes[model] then
@@ -390,7 +390,7 @@ function Autopilot:THOn()
 		self:AHOff()
 		self:OHOff()
 		self:WHOff()
-		-- self:SHOn()
+		self:SHOn()
 		self:HHOn()
 		self:PHOn()
 		config.th.on = true
@@ -419,13 +419,13 @@ function Autopilot:RHOff()
 end
 
 function Autopilot:PHOff()
-	if not config.th.on and not config.oh.on then
+	if not config.ah.on and not config.th.on and not config.oh.on then
 		config.ph.on = false
 	end
 end
 
 function Autopilot:HHOff()
-	if not config.th.on and not config.wh.on and not config.oh.on then
+	if not config.wh.on and not config.th.on and not config.oh.on then
 		config.hh.on = false
 		self:RHOff()
 	end
@@ -953,7 +953,7 @@ function Autopilot:TargetHold() -- Subscribed to Render
 
 	if Game:GetState() ~= GUIState.Game or not self.panel_available or not config.th.on or not IsValid(self.vehicle) then return end
 	
-	if not IsValid(self.target.vehicle) --[[or not self.target.vehicle:GetDriver()]] then
+	if not IsValid(self.target.vehicle) or not self.target.vehicle:GetDriver() then
 		Chat:Print("Target lost.", self.color[1])
 		self:THOff()
 		return
