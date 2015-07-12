@@ -35,10 +35,6 @@ function HUD:__init()
 	
 end
 
-function tostringint(n)
-	return tostring(math.floor(n + 0.5))
-end
-
 function HUD:Toggle(args)
 	if args.text == "/hud" then
 		self.enabled = not self.enabled
