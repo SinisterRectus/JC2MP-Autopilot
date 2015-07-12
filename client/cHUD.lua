@@ -5,12 +5,11 @@ class 'HUD'
 function HUD:__init()
 	
 	self.enabled = true
-	
-	self.screen_size = Render.Size
+
 	self.scale = 0.01
-	self.size = self.screen_size:Length() * self.scale
+	self.size = Render.Size:Length() * self.scale
 	
-	self.position = Vector2(self.screen_size.x * 0.14, self.screen_size.y * 0.08)
+	self.position = Vector2(Render.Width * 0.14, Render.Height * 0.08)
 	
 	self.speed_units = {}
 	self.speed_units[1] = {" m/s", 1}
@@ -36,8 +35,8 @@ function HUD:__init()
 	
 end
 
-function int(n)
-	return math.floor(n + 0.5)	
+function tostringint(n)
+	return tostring(math.floor(n + 0.5))
 end
 
 function HUD:Toggle(args)
@@ -59,35 +58,31 @@ function HUD:Draw() -- Subscribed to Render
 	local ground_speed = Vector2(self.velocity.x, self.velocity.z):Length() * self.speed_units[self.ground_speed_units][2]
 	local vertical_speed = self.velocity.y * self.speed_units[self.vertical_speed_units][2]
 	
-	local air_speed_string = "Air Speed: "..tostring(int(air_speed))..self.speed_units[self.air_speed_units][1]
-	local ground_speed_string = "Ground Speed: "..tostring(int(ground_speed))..self.speed_units[self.ground_speed_units][1]
-	local vertical_speed_string = "Vertical Speed: "..tostring(int(vertical_speed)).. self.speed_units[self.vertical_speed_units][1]
+	local air_speed_string = "Air Speed: "..tostringint(air_speed)..self.speed_units[self.air_speed_units][1]
+	local ground_speed_string = "Ground Speed: "..tostringint(ground_speed)..self.speed_units[self.ground_speed_units][1]
+	local vertical_speed_string = "Vertical Speed: "..tostringint(vertical_speed).. self.speed_units[self.vertical_speed_units][1]
 	
 	local column1_position = self.position
 	
 	Render:DrawText(column1_position, air_speed_string, Color.White, self.size)
 	Render:DrawText(column1_position + Vector2(0, self.size * 1), ground_speed_string, Color.White, self.size)
 	Render:DrawText(column1_position + Vector2(0, self.size * 2), vertical_speed_string, Color.White, self.size)
-	Render:DrawText(column1_position + Vector2(0, self.size * 3), "Health: "..tostring(int(Autopilot.vehicle:GetHealth()*100)).."%", Color.White, self.size)
+	Render:DrawText(column1_position + Vector2(0, self.size * 3), "Health: "..tostringint(Autopilot.vehicle:GetHealth()*100).."%", Color.White, self.size)
 	
 	local altitude = (self.vposition.y - 200) * self.distance_units[self.altitude_units][2]
 	local terrain_height = math.max((Physics:GetTerrainHeight(self.vposition) * self.distance_units[self.altitude_units][2] - 200), 0)
 	local xcoord = (self.vposition.x + 16384) * self.distance_units[self.xcoord_units][2]
 	local ycoord = (self.vposition.z + 16384) * self.distance_units[self.ycoord_units][2]
 	
-	local sealevel_alt_string = "Altitude: "..tostring(int(altitude))..self.distance_units[self.altitude_units][1]
+	local sealevel_alt_string = "Altitude: "..tostringint(altitude)..self.distance_units[self.altitude_units][1]
 	
 	local column2_position = Vector2(self.position.x + 14 * self.size, self.position.y)
 
-	local heading = -math.deg(self.angle.yaw)
+	local heading = Autopilot:YawToHeading(math.deg(self.angle.yaw))
 	
-	if heading <= 0 then
-		heading = heading + 360
-	end
-	
-	local roll_string = "Roll: "..tostring(int(math.deg(self.angle.roll))).."°"
-	local pitch_string = "Pitch: "..tostring(int(math.deg(self.angle.pitch))).."°"
-	local heading_string = "Heading: "..tostring(int(heading)).."°"
+	local roll_string = "Roll: "..tostringint(math.deg(self.angle.roll)).."°"
+	local pitch_string = "Pitch: "..tostringint(math.deg(self.angle.pitch)).."°"
+	local heading_string = "Heading: "..tostringint(heading).."°"
 	
 	local column3_position = Vector2(self.position.x + 25 * self.size, self.position.y)
 	
@@ -100,9 +95,8 @@ end
 	
 function HUD:ResolutionChange(args) -- Subscribed to ResolutionChange
 
-	self.screen_size = args.Size
-	self.size = self.screen_size:Length() * self.scale
-	self.position = Vector2(self.screen__size.x * 0.14, self.screen_ize.y * 0.08)
+	self.size = args.size:Length() * self.scale
+	self.position = Vector2(args.size.x * 0.14, args.size.y * 0.08)
 	
 end
 
