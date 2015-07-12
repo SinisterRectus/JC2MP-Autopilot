@@ -4,429 +4,22 @@ class 'Autopilot'
 
 function Autopilot:__init()
 			
-	self.config = { 
-		["ap"] = {
-			["name"] = "Autopilot",
-			["on"] = false
-		},
-		["rh"] = {
-			["name"] = "Roll",
-			["on"] = false,
-			["setting"] = 0,
-			["units"] = "°",
-			["min_setting"] = -60, -- Do not set less than -180
-			["max_setting"] = 60, -- Do not set greater than 180
-			["gain"] = 0.20, -- 0.20 default
-			["max_input"] = 0.7, -- Percentage from 0 to 1
-			["quick"] = "Zero"
-		},
-		["ph"] = {			
-			["name"] = "Pitch",
-			["on"] = false,
-			["setting"] = 0,
-			["units"] = "°",
-			["min_setting"] = -60, -- Do not set less than -90
-			["max_setting"] = 60, -- Do not set greater than 90
-			["gain"] = 0.50, -- 0.50 default
-			["max_input"] = 0.8, -- Percentage from 0 to 1
-			["quick"] = "Zero"
-		},
-		["hh"] = {			
-			["name"] = "Heading",
-			["on"] = false,
-			["setting"] = 0,
-			["units"] = "°",
-			["min_setting"] = 0, -- Do not change
-			["max_setting"] = 360, -- Do not change
-			["gain"] = 2.00, -- 2.00 default
-			["roll_limit"] = 45, -- Maximum roll angle while HH is active, 30 to 60 recommended
-			["quick"] = "Lock"
-		},
-		["ah"] = {
-			["name"] = "Altitude",
-			["on"] = false,
-			["setting"] = 0,
-			["units"] = " m",
-			["min_setting"] = 0, -- Do not set less than 0
-			["max_setting"] = 5000, -- Planes do not maneuver properly above 5000 m
-			["gain"] = 0.30, -- 0.30 default
-			["pitch_limit"] = 45, -- Maximum pitch angle while AH is active, 30 to 60 recommended
-			["bias"] = 5, -- Correction for gravity
-			["step"] = 50, -- Step size for changing setting
-			["quick"] = "Lock"
-		},
-		["sh"] = {
-			["name"] = "Speed",
-			["on"] = false,
-			["setting"] = 0,
-			["units"] = " km/h",
-			["min_setting"] = 0, -- Do not set less than 0
-			["max_setting"] = 500, -- Planes rarely exceed 500 km/h without server functions
-			["gain"] = 0.04, -- 0.04 default
-			["max_input"] = 1, -- Percentage from 0 to 1, needs to be exactly 1 for take-off
-			["step"] = 5, -- Step size for changing setting
-			["quick"] = "Cruise"
-		},
-		["wh"] = {
-			["name"] = "Waypoint",
-			["on"] = false
-		},
-		["oh"] = {
-			["name"] = "Approach",
-			["on"] = false
-		},
-		["th"] = {
-			["name"] = "Target",
-			["on"] = false
-		}
-	}
-	
-	self.planes = {
-		[24] = { -- F-33 DragonFly
-			["available"] = true,
-			["landing_speed"] = 160,
-			["cruise_speed"] = 296,
-			["max_speed"] = 406,
-			["slow_distance"] = 1000,
-			["flare_distance"] = 50,
-			["flare_pitch"] = 3,
-			["cone_angle"] = 90
-		},
-		[30] = { -- Si-47 Leopard
-			["available"] = true,
-			["landing_speed"] = 160,
-			["cruise_speed"] = 277,
-			["max_speed"] = 340,
-			["slow_distance"] = 1000,
-			["flare_distance"] = 100,
-			["flare_pitch"] = 3,
-			["cone_angle"] = 90
-		},
-		[34] = { -- G9 Eclipse
-			["available"] = true,
-			["landing_speed"] = 190,
-			["cruise_speed"] = 341,
-			["max_speed"] = 401,
-			["slow_distance"] = 1500,
-			["flare_distance"] = 150,
-			["flare_pitch"] = 3,
-			["cone_angle"] = 75
-		},
-		[39] = { -- Aeroliner 474
-			["available"] = true,
-			["landing_speed"] = 180,
-			["cruise_speed"] = 324,
-			["max_speed"] = 352,
-			["slow_distance"] = 1000,
-			["flare_distance"] = 100,
-			["flare_pitch"] = -1,
-			["cone_angle"] = 60
-		},
-		[51] = { -- Cassius 192
-			["available"] = true,
-			["landing_speed"] = 120,
-			["cruise_speed"] = 250,
-			["max_speed"] = 314,
-			["slow_distance"] = 1000,
-			["flare_distance"] = 100,
-			["flare_pitch"] = 3,
-			["cone_angle"] = 75
-		},
-		[59] = { -- Peek Airhawk 225
-			["available"] = true,
-			["landing_speed"] = 130,
-			["cruise_speed"] = 207,
-			["max_speed"] = 242,
-			["slow_distance"] = 1000,
-			["flare_distance"] = 20,
-			["flare_pitch"] = 0,
-			["cone_angle"] = 90
-		},
-		[81] = { -- Pell Silverbolt 6
-			["available"] = true,
-			["landing_speed"] = 150,
-			["cruise_speed"] = 262,
-			["max_speed"] = 343,
-			["slow_distance"] = 1000,
-			["flare_distance"] = 20,
-			["flare_pitch"] = 3,
-			["cone_angle"] = 90
-		},
-		[85] = { -- Bering I-86DP
-			["available"] = true,
-			["landing_speed"] = 180,
-			["cruise_speed"] = 313,
-			["max_speed"] = 339,
-			["slow_distance"] = 1000,
-			["flare_distance"] = 200,
-			["flare_pitch"] = 3,
-			["cone_angle"] = 60
-		}
-	}
-	
-	self.airports = {
-		["PIA"] = {
-			["27"] = {
-				["near_marker"] = Vector3(-5842.51, 208.97, -3009.23),
-				["far_marker"] = Vector3(-6816.68, 208.97, -2994.51),				
-				["glide_length"] = 4000,
-				["glide_pitch"] = 3,
-				["cone_angle"] = 15
-			},
-			["09"] = {
-				["near_marker"] = Vector3(-6816.68, 208.97, -2994.51),
-				["far_marker"] = Vector3(-5842.51, 208.97, -3009.23),
-				["glide_length"] = 1500,
-				["glide_pitch"] = 5,
-				["cone_angle"] = 5
-			},
-			["05"] = {
-				["near_marker"] = Vector3(-6398.21, 208.90, -3176.93),
-				["far_marker"] = Vector3(-5998.58, 208.90, -3576.45),
-				["glide_length"] = 2500,
-				["glide_pitch"] = 5,
-				["cone_angle"] = 5
-			},
-			["23"] = {
-				["near_marker"] = Vector3(-5998.58, 208.90, -3576.45),
-				["far_marker"] = Vector3(-6398.21, 208.90, -3176.93),
-				["glide_length"] = 3000,
-				["glide_pitch"] = 3,
-				["cone_angle"] = 10
-			}
-		},
-		["Kem Sungai Sejuk"] = {
-			["04"] = {
-				["near_marker"] = Vector3(601.69, 298.84, -3937.16),
-				["far_marker"] = Vector3(882.20, 298.84, -4246.67),
-				["glide_length"] = 5000,
-				["glide_pitch"] = 4,
-				["cone_angle"] = 10
-			}
-		},
-		["Pulau Dayang Terlena"] = {
-			["03L"] = {
-				["near_marker"] = Vector3(-12238.39, 610.94, 4664.57),
-				["far_marker"] = Vector3(-11970.58, 610.94, 4162.33),
-				["glide_length"] = 5000,
-				["glide_pitch"] = 6,
-				["cone_angle"] = 10
-			},
-			["21R"] = {
-				["near_marker"] = Vector3(-11970.58, 610.94, 4162.33),
-				["far_marker"] = Vector3(-12238.39, 610.94, 4664.57),
-				["glide_length"] = 5000,
-				["glide_pitch"] = 3,
-				["cone_angle"] = 10
-			},
-			["03R"] = {
-				["near_marker"] = Vector3(-12101.96, 611.10, 4737.54),
-				["far_marker"] = Vector3(-11834.03, 611.10, 4236.06),
-				["glide_length"] = 5000,
-				["glide_pitch"] = 6,
-				["cone_angle"] = 10
-			},
-			["21L"] = {
-				["near_marker"] = Vector3(-11834.03, 611.10, 4236.06),
-				["far_marker"] = Vector3(-12101.96, 611.10, 4737.54),
-				["glide_length"] = 5000,
-				["glide_pitch"] = 3,
-				["cone_angle"] = 10
-			},
-			["12"] = {
-				["near_marker"] = Vector3(-12196.25, 611.22, 4874.13),
-				["far_marker"] = Vector3(-11693.96, 611.22, 5142.52),
-				["glide_length"] = 5000,
-				["glide_pitch"] = 3,
-				["cone_angle"] = 15
-			},
-			["30"] = {
-				["near_marker"] = Vector3(-11693.96, 611.22, 5142.52),
-				["far_marker"] = Vector3(-12196.25, 611.22, 4874.13),
-				["glide_length"] = 5000,
-				["glide_pitch"] = 3,
-				["cone_angle"] = 15
-			},
-		},
-		["Kem Jalan Merpati"] = {
-			["30"] = {
-				["near_marker"] = Vector3(-6643.80, 1050.34, 11950.66),
-				["far_marker"] = Vector3(-7131.25, 1050.34, 11658.72),
-				["glide_length"] = 5000,
-				["glide_pitch"] = 3,
-				["cone_angle"] = 15
-			}
-		},
-		["Kem Udara Wau Pantas"] = {
-			["27"] = {
-				["near_marker"] = Vector3(6140.61, 251.00, 7158.83),
-				["far_marker"] = Vector3(5573.50, 251.00, 7158.61),				
-				["glide_length"] = 5000,
-				["glide_pitch"] = 3,
-				["cone_angle"] = 15
-			},
-			["09"] = {
-				["near_marker"] = Vector3(5573.50, 251.00, 7158.61),
-				["far_marker"] = Vector3(6140.61, 251.00, 7158.83),
-				["glide_length"] = 5000,
-				["glide_pitch"] = 3,
-				["cone_angle"] = 15
-			},
-			["36"] = {
-				["near_marker"] = Vector3(6044.50, 251.00, 6996.85),
-				["far_marker"] = Vector3(6044.50, 251.00, 6428.61),
-				["glide_length"] = 5000,
-				["glide_pitch"] = 3,
-				["cone_angle"] = 15
-			},
-			["18"] = {
-				["near_marker"] = Vector3(6044.50, 251.00, 6428.61),
-				["far_marker"] = Vector3(6044.50, 251.00, 6996.85),
-				["glide_length"] = 1500,
-				["glide_pitch"] = 3,
-				["cone_angle"] = 15
-			}		
-		},
-		["Pulau Dongeng"] = {
-			["12"] = {
-				["near_marker"] = Vector3(5696.48, 264.18, 10363.78),
-				["far_marker"] = Vector3(5863.38, 264.18, 10460.01),
-				["glide_length"] = 2000,
-				["glide_pitch"] = 4,
-				["cone_angle"] = 15
-			}
-		},
-		["Tanah Lebar"] = {
-			["28R"] = {
-				["near_marker"] = Vector3(-160.40, 295.36, 7089.45),
-				["far_marker"] = Vector3(-351.18, 295.36, 7060.66),
-				["glide_length"] = 5000,
-				["glide_pitch"] = 6,
-				["cone_angle"] = 6
-			},
-			["28L"] = {
-				["near_marker"] = Vector3(-169.66, 295.35, 7148.39),
-				["far_marker"] = Vector3(-358.35, 295.35, 7119.41),
-				["glide_length"] = 5000,
-				["glide_pitch"] = 6,
-				["cone_angle"] = 6
-			}
-		},
-		["Kampung Tujuh Telaga"] = {
-			["14"] = {
-				["near_marker"] = Vector3(595.28, 207.06, -98.16),
-				["far_marker"] = Vector3(748.07, 208.15, 58.73),
-				["glide_length"] = 5000,
-				["glide_pitch"] = 3,
-				["cone_angle"] = 15
-			}
-		},
-		["Teluk Permata"] = {
-			["14"] = {
-				["near_marker"] = Vector3(-7123.66, 207.01, -10822.38),
-				["far_marker"] = Vector3(-6837.64, 207.01, -10636.57),
-				["glide_length"] = 5000,
-				["glide_pitch"] = 3,
-				["cone_angle"] = 15
-			}
-		},
-		["Banjaran Gundin"] = {
-			["23"] = {
-				["near_marker"] = Vector3(-4610.55, 405.64, -11649.26),
-				["far_marker"] = Vector3(-5012.30, 405.64, -11247.39),
-				["glide_length"] = 5000,
-				["glide_pitch"] = 5,
-				["cone_angle"] = 15
-			},
-			["45"] = {
-				["near_marker"] = Vector3(-5012.30, 405.64, -11247.39),
-				["far_marker"] = Vector3(-4610.55, 405.64, -11649.26),
-				["glide_length"] = 5000,
-				["glide_pitch"] = 5,
-				["cone_angle"] = 12
-			}
-		},
-		["Sungai Cengkih Besar"] = {
-			["20"] = {
-				["near_marker"] = Vector3(4706.35, 208.40, -10989.74),
-				["far_marker"] = Vector3(4477.04, 208.40, -10467.98),				
-				["glide_length"] = 5000,
-				["glide_pitch"] = 3,
-				["cone_angle"] = 15
-			},
-			["29"] = {
-				["near_marker"] = Vector3(4667.72, 208.44, -10624.48),
-				["far_marker"] = Vector3(4147.00, 208.44, -10853.32),				
-				["glide_length"] = 5000,
-				["glide_pitch"] = 3,
-				["cone_angle"] = 15
-			},
-			["11"] = {
-				["near_marker"] = Vector3(4147.00, 208.44, -10853.32),
-				["far_marker"] = Vector3(4667.72, 208.44, -10624.48),				
-				["glide_length"] = 5000,
-				["glide_pitch"] = 3,
-				["cone_angle"] = 15
-			}
-		},
-		["Paya Luas"] = {
-			["27"] = {
-				["near_marker"] = Vector3(12011.65, 206.88, -10715.07),
-				["far_marker"] = Vector3(11440.75, 206.88, -10715.09),				
-				["glide_length"] = 5000,
-				["glide_pitch"] = 3,
-				["cone_angle"] = 15
-			},
-			["09"] = {
-				["near_marker"] = Vector3(11440.75, 206.88, -10715.09),
-				["far_marker"] = Vector3(12011.65, 206.88, -10715.07),
-				["glide_length"] = 5000,
-				["glide_pitch"] = 3,
-				["cone_angle"] = 15
-			},
-			["36"] = {
-				["near_marker"] = Vector3(12171.29, 206.88, -10243.73),
-				["far_marker"] = Vector3(12171.29, 206.88, -10812.65),
-				["glide_length"] = 5000,
-				["glide_pitch"] = 3,
-				["cone_angle"] = 15
-			},
-			["18"] = {
-				["near_marker"] = Vector3(12171.26, 206.88, -10812.65),
-				["far_marker"] = Vector3(12171.26, 206.88, -10243.73),
-				["glide_length"] = 1500,
-				["glide_pitch"] = 3,
-				["cone_angle"] = 15
-			}			
-		},
-		["Lemabah Delima"] = {
-			["13"] = {
-				["near_marker"] = Vector3(9460.27, 204.78, 3661.23),
-				["far_marker"] = Vector3(9890.33, 204.78, 4031.97),
-				["glide_length"] = 5000,
-				["glide_pitch"] = 3,
-				["cone_angle"] = 15
-			},
-			["31"] = {
-				["near_marker"] = Vector3(9890.33, 204.78, 4032.38),
-				["far_marker"] = Vector3(9460.27, 204.78, 3661.23),
-				["glide_length"] = 5000,
-				["glide_pitch"] = 3,
-				["cone_angle"] = 15
-			}
-		}
-	}
-	
 	self.panel_available = false -- Whether you are in a plane with autopilot available
+	
+	self.two_keys = false -- If false then Z toggles both the panel and mouse
+	self.panel_toggle_button = "Z"
+	self.mouse_toggle_button = "M"
 	
 	if LocalPlayer:InVehicle() then
 		local vehicle = LocalPlayer:GetVehicle()
-		local model = vehicle:GetModelId()
-		if self.planes[model] then
-			if self.planes[model].available then
-				self.panel_available = true
-				self.vehicle = vehicle
-				self.model = model
+		if vehicle:GetDriver() == LocalPlayer then
+			local model = vehicle:GetModelId()
+			if planes[model] then
+				if planes[model].available then
+					self.panel_available = true
+					self.vehicle = vehicle
+					self.model = model
+				end
 			end
 		end
 	end
@@ -455,10 +48,6 @@ function Autopilot:InitGUI()
 
 	self.window = Window.Create()
 	
-	self.two_keys = false -- If false then Z toggles both the panel and mouse
-	self.panel_toggle_button = "Z"
-	self.mouse_toggle_button = "M"
-	
 	self.text_scale = 0.03
 	self.window.position = Vector2(0.63, 0.04)
 	self.window.size = Vector2(0.28, 0.28)
@@ -486,23 +75,24 @@ function Autopilot:InitGUI()
 		["th"] = {}
 	}
 	
-	self.break_line = Button.Create(self.window)
+	self.break_line = Rectangle.Create(self.window)
+	self.break_line:SetColor(Color(64, 64, 64))
 		
 	for k,v in pairs(self.window.setting) do
 	
 		v.button = Button.Create(self.window)
-		v.button:SetText(self.config[k].name)
+		v.button:SetText(config[k].name)
 		v.button:SetToggleable(true)
 		v.button:SetTextPressedColor(Color.Orange)
 		
-		if self.config[k].setting then
+		if config[k].setting then
 			v.label = Label.Create(self.window)
 			v.slider = HorizontalSlider.Create(self.window)
-			v.slider:SetRange(self.config[k].min_setting, self.config[k].max_setting)
+			v.slider:SetRange(config[k].min_setting, config[k].max_setting)
 			
-			if self.config[k].step then
+			if config[k].step then
 				v.slider:SetClampToNotches(true)
-				v.slider:SetNotchCount((self.config[k].max_setting-self.config[k].min_setting)/self.config[k].step)
+				v.slider:SetNotchCount((config[k].max_setting-config[k].min_setting)/config[k].step)
 			end
 			
 			v.inc = Button.Create(self.window)
@@ -511,7 +101,7 @@ function Autopilot:InitGUI()
 			v.dec:SetText("-")
 			
 			v.quick = Button.Create(self.window)
-			v.quick:SetText(self.config[k].quick)
+			v.quick:SetText(config[k].quick)
 			
 		end
 		
@@ -567,141 +157,141 @@ function Autopilot:InitGUI()
 end
 
 function Autopilot:RHSlider(args)
-	self.config.rh.setting = args:GetValue()
+	config.rh.setting = args:GetValue()
 end
 
 function Autopilot:PHSlider(args)
-	self.config.ph.setting = args:GetValue()
+	config.ph.setting = args:GetValue()
 end
 
 function Autopilot:HHSlider(args)
-	self.config.hh.setting = args:GetValue()
+	config.hh.setting = args:GetValue()
 end
 
 function Autopilot:AHSlider(args)
-	self.config.ah.setting = args:GetValue()
+	config.ah.setting = args:GetValue()
 end
 
 function Autopilot:SHSlider(args)
-	self.config.sh.setting = args:GetValue()
+	config.sh.setting = args:GetValue()
 end
 
 function Autopilot:RHQuick(args)
-	self.config.rh.setting = 0
+	config.rh.setting = 0
 	self:RHOn()
 end
 
 function Autopilot:PHQuick(args)
-	self.config.ph.setting = 0
+	config.ph.setting = 0
 	self:PHOn()
 end
 
 function Autopilot:HHQuick(args)
-	self.config.hh.setting = self:GetHeading()
+	config.hh.setting = self:GetHeading()
 	self:HHOn()
 end
 
 function Autopilot:AHQuick(args)
-	self.config.ah.setting = self:GetAltitude()
+	config.ah.setting = self:GetAltitude()
 	self:AHOn()
 end
 
 function Autopilot:SHQuick(args)
-	self.config.sh.setting = self.planes[self.model].cruise_speed
+	config.sh.setting = planes[self.model].cruise_speed
 	self:SHOn()
 end
 
 function Autopilot:RHIncrease()
-	if self.config.rh.setting < self.config.rh.max_setting then
-		self.config.rh.setting = self.config.rh.setting + 1
+	if config.rh.setting < config.rh.max_setting then
+		config.rh.setting = config.rh.setting + 1
 	end
 end
 
 function Autopilot:PHIncrease()
-	if self.config.ph.setting < self.config.ph.max_setting then
-		self.config.ph.setting = self.config.ph.setting + 1
+	if config.ph.setting < config.ph.max_setting then
+		config.ph.setting = config.ph.setting + 1
 	end
 end
 
 function Autopilot:HHIncrease()
-	if self.config.hh.setting == 360 then
-		self.config.hh.setting = 1
-	elseif self.config.hh.setting < self.config.hh.max_setting then
-		self.config.hh.setting = self.config.hh.setting + 1
+	if config.hh.setting == 360 then
+		config.hh.setting = 1
+	elseif config.hh.setting < config.hh.max_setting then
+		config.hh.setting = config.hh.setting + 1
 	end
 end
 
 function Autopilot:AHIncrease()
-	if self.config.ah.setting < self.config.ah.max_setting then
-		self.config.ah.setting = self.config.ah.setting + self.config.ah.step
+	if config.ah.setting < config.ah.max_setting then
+		config.ah.setting = config.ah.setting + config.ah.step
 	end
 end
 
 function Autopilot:SHIncrease()
-	if self.config.sh.setting < self.config.sh.max_setting then
-		self.config.sh.setting = self.config.sh.setting + self.config.sh.step
+	if config.sh.setting < config.sh.max_setting then
+		config.sh.setting = config.sh.setting + config.sh.step
 	end
 end
 
 function Autopilot:RHDecrease()
-	if self.config.rh.setting > self.config.rh.min_setting then
-		self.config.rh.setting = self.config.rh.setting - 1
+	if config.rh.setting > config.rh.min_setting then
+		config.rh.setting = config.rh.setting - 1
 	end
 end
 
 function Autopilot:PHDecrease()
-	if self.config.ph.setting > self.config.ph.min_setting then
-		self.config.ph.setting = self.config.ph.setting - 1
+	if config.ph.setting > config.ph.min_setting then
+		config.ph.setting = config.ph.setting - 1
 	end
 end
 
 function Autopilot:HHDecrease()
-	if self.config.hh.setting == 0 then
-		self.config.hh.setting = 359
-	elseif self.config.hh.setting > self.config.hh.min_setting then
-		self.config.hh.setting = self.config.hh.setting - 1
+	if config.hh.setting == 0 then
+		config.hh.setting = 359
+	elseif config.hh.setting > config.hh.min_setting then
+		config.hh.setting = config.hh.setting - 1
 	end
 end
 
 function Autopilot:AHDecrease()
-	if self.config.ah.setting > self.config.ah.min_setting then
-		self.config.ah.setting = self.config.ah.setting - self.config.ah.step
+	if config.ah.setting > config.ah.min_setting then
+		config.ah.setting = config.ah.setting - config.ah.step
 	end
 end
 
 function Autopilot:SHDecrease()
-	if self.config.sh.setting > self.config.sh.min_setting then
-		self.config.sh.setting = self.config.sh.setting - self.config.sh.step
+	if config.sh.setting > config.sh.min_setting then
+		config.sh.setting = config.sh.setting - config.sh.step
 	end
 end
 
 function Autopilot:APOn()
-	self.config.ap.on = true
+	config.ap.on = true
 end
 
 function Autopilot:RHOn()
 	self:APOn()
-	self.config.rh.on = true
+	config.rh.on = true
 end
 
 function Autopilot:PHOn()
 	self:APOn()
-	self.config.ph.on = true
+	config.ph.on = true
 end
 
 function Autopilot:HHOn()
 	self:RHOn()
-	self.config.hh.on = true
+	config.hh.on = true
 end
 
 function Autopilot:AHOn()
 	self:PHOn()
-	self.config.ah.on = true
+	config.ah.on = true
 end
 
 function Autopilot:SHOn()
 	self:APOn()
-	self.config.sh.on = true
+	config.sh.on = true
 end
 
 function Autopilot:WHOn()
@@ -710,7 +300,7 @@ function Autopilot:WHOn()
 		self:OHOff()
 		self:THOff()
 		self:HHOn()
-		self.config.wh.on = true
+		config.wh.on = true
 	else
 		Chat:Print("Waypoint not set.", Color.Silver)
 	end
@@ -725,20 +315,20 @@ function Autopilot:OHOn()
 	local nearest_marker
 	local nearest_marker_distance = math.huge
 	
-	for airport,runways in pairs(self.airports) do
+	for airport,runways in pairs(airports) do
 		for runway in pairs(runways) do
 		
-			local near_marker = self.airports[airport][runway].near_marker
-			local far_marker = self.airports[airport][runway].far_marker
+			local near_marker = airports[airport][runway].near_marker
+			local far_marker = airports[airport][runway].far_marker
 			local distance = Vector3.Distance(position, near_marker)
 				
-			if distance < self.airports[airport][runway].glide_length and distance < nearest_marker_distance then
+			if distance < airports[airport][runway].glide_length and distance < nearest_marker_distance then
 			
 				local dy = near_marker.y - position.y
 				
-				local runway_cone_angle = self.airports[airport][runway].cone_angle
+				local runway_cone_angle = airports[airport][runway].cone_angle
 				local pitch_to_plane = math.deg(math.asin(-dy / distance))
-				local pitch_from_runway = self.airports[airport][runway].glide_pitch
+				local pitch_from_runway = airports[airport][runway].glide_pitch
 				local pitch_difference1 = self:DegreesDifference(pitch_to_plane, pitch_from_runway)
 				
 				if math.abs(pitch_difference1) < 0.5 * runway_cone_angle then
@@ -752,7 +342,7 @@ function Autopilot:OHOn()
 								
 					if math.abs(heading_difference1) < 0.5 * runway_cone_angle then
 					
-						local plane_cone_angle = self.planes[self.model].cone_angle
+						local plane_cone_angle = planes[self.model].cone_angle
 						local pitch_to_runway = math.deg(math.asin(dy / distance))
 						local pitch_from_plane = self:GetPitch()
 						local pitch_difference2 = self:DegreesDifference(pitch_to_runway, pitch_from_plane)
@@ -787,14 +377,14 @@ function Autopilot:OHOn()
 	if nearest_marker then
 		self.approach = {}
 		Chat:Print("Approach to "..airport_name.." RWY"..runway_name.." set.", Color.Orange)
-		self.approach.near_marker = self.airports[airport_name][runway_name].near_marker
-		self.approach.far_marker = self.airports[airport_name][runway_name].far_marker
-		self.approach.angle = Angle(math.rad(self:HeadingToYaw(runway_direction)), math.rad(self.airports[airport_name][runway_name].glide_pitch), 0)
+		self.approach.near_marker = airports[airport_name][runway_name].near_marker
+		self.approach.far_marker = airports[airport_name][runway_name].far_marker
+		self.approach.angle = Angle(math.rad(self:HeadingToYaw(runway_direction)), math.rad(airports[airport_name][runway_name].glide_pitch), 0)
 		self:WHOff()
 		self:HHOn()
 		self:AHOn()
 		self:SHOn()
-		self.config.oh.on = true
+		config.oh.on = true
 		self.flare = false
 	else
 		Chat:Print("You are not approaching a runway.", Color.Silver)
@@ -814,7 +404,7 @@ function Autopilot:THOn()
 		if vehicle:GetDriver() and vehicle ~= local_vehicle then
 	
 			local model = vehicle:GetModelId()
-			if self.planes[model] then
+			if planes[model] then
 			
 				local vehicle_position = vehicle:GetPosition()
 				local vehicle_distance = Vector3.Distance(local_position, vehicle_position)
@@ -823,7 +413,7 @@ function Autopilot:THOn()
 
 					local dy = vehicle_position.y - local_position.y
 				
-					local plane_cone_angle = self.planes[self.model].cone_angle
+					local plane_cone_angle = planes[self.model].cone_angle
 					local pitch_to_target = math.deg(math.asin(dy / vehicle_distance))
 					local pitch_from_plane = self:GetPitch()
 					local pitch_difference = self:DegreesDifference(pitch_to_target, pitch_from_plane)
@@ -863,7 +453,7 @@ function Autopilot:THOn()
 		self:SHOn()
 		self:HHOn()
 		self:PHOn()
-		self.config.th.on = true
+		config.th.on = true
 	else
 		Chat:Print("No target found.", Color.Silver)
 	end
@@ -871,62 +461,62 @@ function Autopilot:THOn()
 end
 
 function Autopilot:APOff()
-	self.config.ap.on = false
-	self.config.rh.on = false
-	self.config.ph.on = false
-	self.config.hh.on = false
-	self.config.ah.on = false
-	self.config.sh.on = false
-	self.config.wh.on = false
-	self.config.oh.on = false
-	self.config.th.on = false
+	config.ap.on = false
+	config.rh.on = false
+	config.ph.on = false
+	config.hh.on = false
+	config.ah.on = false
+	config.sh.on = false
+	config.wh.on = false
+	config.oh.on = false
+	config.th.on = false
 end
 
 function Autopilot:RHOff()
-	if not self.config.wh.on and not self.config.hh.on then
-		self.config.rh.on = false
+	if not config.wh.on and not config.hh.on then
+		config.rh.on = false
 	end
 end
 
 function Autopilot:PHOff()
-	if not self.config.ah.on and not self.config.oh.on then
-		self.config.ph.on = false
+	if not config.ah.on and not config.oh.on then
+		config.ph.on = false
 	end
 end
 
 function Autopilot:HHOff()
-	if not self.config.wh.on and not self.config.oh.on then
-		self.config.hh.on = false
+	if not config.wh.on and not config.oh.on then
+		config.hh.on = false
 		self:RHOff()
 	end
 end
 
 function Autopilot:AHOff()
-	if not self.config.oh.on or self.flare then
-		self.config.ah.on = false
+	if not config.oh.on or self.flare then
+		config.ah.on = false
 		self:PHOff()
 	end
 end
 
 function Autopilot:SHOff()
-	if not self.config.oh.on then
-		self.config.sh.on = false
+	if not config.oh.on then
+		config.sh.on = false
 	end
 end
 
 function Autopilot:WHOff()
-	if self.config.wh.on then
-		self.config.wh.on = false
-		if not self.config.oh.on then
+	if config.wh.on then
+		config.wh.on = false
+		if not config.oh.on then
 			self:HHOff()
 		end
 	end
 end
 
 function Autopilot:OHOff()
-	if self.config.oh.on then
-		self.config.oh.on = false
-		if not self.config.wh.on then
+	if config.oh.on then
+		config.oh.on = false
+		if not config.wh.on then
 			self:HHOff()
 		end
 		self:AHOff()
@@ -936,12 +526,12 @@ function Autopilot:OHOff()
 end
 
 function Autopilot:THOff()
-	if self.config.th.on then
+	if config.th.on then
 		self:HHOff()
 		self:PHOff()
 		self:SHOff()
 		self.target = nil
-		self.config.th.on = false
+		config.th.on = false
 	end
 end
 
@@ -975,17 +565,17 @@ function Autopilot:InputBlock(args) -- Subscribed to LocalPlayerInput
 			return false
 		end
 	end
-	if self.config.rh.on then
+	if config.rh.on then
 		if i == 60 or i == 61 then
 			return false
 		end
 	end
-	if self.config.ph.on then
+	if config.ph.on then
 		if i == 58 or i == 59 then
 			return false
 		end
 	end
-	if self.config.sh.on then
+	if config.sh.on then
 		if i == 64 or i == 65 then
 			return false
 		end
@@ -1023,7 +613,7 @@ function Autopilot:WindowResize() -- Subscribed to ModuleLoad and Window Resize
 		v.button:SetSizeRel(self.window.button_size)
 		v.button:SetTextSize(self.text_size)
 		
-		if self.config[k].setting then
+		if config[k].setting then
 		
 			v.label:SetSizeRel(self.window.label_size)
 			v.label:SetTextSize(self.text_size)
@@ -1052,10 +642,10 @@ end
 function Autopilot:WindowUpdate() -- Subscribed to Window Render
 
 	for k,v in pairs(self.window.setting) do
-		v.button:SetToggleState(self.config[k].on)
-		if self.config[k].setting then
-			v.label:SetText(tostringint(self.config[k].setting)..self.config[k].units)
-			v.slider:SetValue(self.config[k].setting)		
+		v.button:SetToggleState(config[k].on)
+		if config[k].setting then
+			v.label:SetText(tostringint(config[k].setting)..config[k].units)
+			v.slider:SetValue(config[k].setting)		
 		end
 	end
 		
@@ -1124,13 +714,15 @@ end
 
 function Autopilot:EnterPlane(args)
 	
-	local model = args.vehicle:GetModelId()
-	if self.planes[model] then
-		if self.planes[model].available then
-			self:APOff()
-			self.panel_available = true
-			self.vehicle = args.vehicle
-			self.model = model
+	if args.is_driver then
+		local model = args.vehicle:GetModelId()
+		if planes[model] then
+			if planes[model].available then
+				self:APOff()
+				self.panel_available = true
+				self.vehicle = args.vehicle
+				self.model = model
+			end
 		end
 	end
 	
@@ -1155,7 +747,7 @@ function Autopilot:PlaneDespawn(args)
 		if IsValid(args.entity) then
 			if args.entity:GetDriver() == LocalPlayer then
 				local model = args.entity:GetModelId()
-				if self.planes[model] then
+				if planes[model] then
 					if self.panel_available then
 						self:APOff()
 						self.panel_available = false
@@ -1173,18 +765,18 @@ end
 
 function Autopilot:RollHold() -- Subscribed to InputPoll
 
-	if Game:GetState() ~= GUIState.Game or not self.panel_available or not self.config.rh.on or not IsValid(self.vehicle) then return end	
+	if Game:GetState() ~= GUIState.Game or not self.panel_available or not config.rh.on or not IsValid(self.vehicle) then return end	
 	
 	local roll = self:GetRoll()
 	
-	local input = math.abs(roll - self.config.rh.setting) * self.config.rh.gain
-	if input > self.config.rh.max_input then input = self.config.rh.max_input end
+	local input = math.abs(roll - config.rh.setting) * config.rh.gain
+	if input > config.rh.max_input then input = config.rh.max_input end
 	
-	if self.config.rh.setting < roll then
+	if config.rh.setting < roll then
 		Input:SetValue(Action.PlaneTurnRight, input)
 	end
 	
-	if self.config.rh.setting > roll then
+	if config.rh.setting > roll then
 		Input:SetValue(Action.PlaneTurnLeft, input)
 	end
 	
@@ -1192,32 +784,32 @@ end
 
 function Autopilot:PitchHold() -- Subscribed to InputPoll
 
-	if Game:GetState() ~= GUIState.Game or not self.panel_available or not self.config.ph.on or not IsValid(self.vehicle) then return end
+	if Game:GetState() ~= GUIState.Game or not self.panel_available or not config.ph.on or not IsValid(self.vehicle) then return end
 	
 	local pitch = self:GetPitch()
 	local roll = self:GetRoll()
 	
-	local input = math.abs(pitch - self.config.ph.setting) * self.config.ph.gain
-	if input > self.config.ph.max_input then input = self.config.ph.max_input end
+	local input = math.abs(pitch - config.ph.setting) * config.ph.gain
+	if input > config.ph.max_input then input = config.ph.max_input end
 	
 	-- Deactivates if the plane is banked too far left or right.
 	
 	if math.abs(roll) < 60 then
-		if self.config.ph.setting > pitch then
+		if config.ph.setting > pitch then
 			Input:SetValue(Action.PlanePitchUp, input)
 		end
 		
-		if self.config.ph.setting < pitch then
+		if config.ph.setting < pitch then
 			Input:SetValue(Action.PlanePitchDown, input)
 		end
 	end
 	
 	if math.abs(roll) > 120 then
-		if self.config.ph.setting > pitch then
+		if config.ph.setting > pitch then
 			Input:SetValue(Action.PlanePitchDown, input)
 		end
 		
-		if self.config.ph.setting < pitch then
+		if config.ph.setting < pitch then
 			Input:SetValue(Action.PlanePitchUp, input)
 		end
 	end
@@ -1226,49 +818,49 @@ end
 
 function Autopilot:HeadingHold() -- Subscribed to InputPoll
 
-	if Game:GetState() ~= GUIState.Game or not self.panel_available or not self.config.hh.on or not IsValid(self.vehicle) then return end
+	if Game:GetState() ~= GUIState.Game or not self.panel_available or not config.hh.on or not IsValid(self.vehicle) then return end
 	
 	local heading = self:GetHeading()
 	
-	local diff = self:DegreesDifference(self.config.hh.setting, heading)
+	local diff = self:DegreesDifference(config.hh.setting, heading)
 	
-	self.config.rh.setting = diff * self.config.hh.gain
+	config.rh.setting = diff * config.hh.gain
 	
-	if self.config.rh.setting > self.config.hh.roll_limit then
-		self.config.rh.setting = self.config.hh.roll_limit
-	elseif self.config.rh.setting < -self.config.hh.roll_limit then
-		self.config.rh.setting = -self.config.hh.roll_limit
+	if config.rh.setting > config.hh.roll_limit then
+		config.rh.setting = config.hh.roll_limit
+	elseif config.rh.setting < -config.hh.roll_limit then
+		config.rh.setting = -config.hh.roll_limit
 	end
 	
 end
 
 function Autopilot:AltitudeHold() -- Subscribed to InputPoll
 
-	if Game:GetState() ~= GUIState.Game or not self.panel_available or not self.config.ah.on or not IsValid(self.vehicle) then return end
+	if Game:GetState() ~= GUIState.Game or not self.panel_available or not config.ah.on or not IsValid(self.vehicle) then return end
 	
-	self.config.ph.setting = (self.config.ah.setting - Autopilot:GetAltitude() + self.config.ah.bias) * self.config.ah.gain
+	config.ph.setting = (config.ah.setting - Autopilot:GetAltitude() + config.ah.bias) * config.ah.gain
 	
-	if self.config.ph.setting > self.config.ah.pitch_limit then
-		self.config.ph.setting = self.config.ah.pitch_limit
-	elseif self.config.ph.setting < -self.config.ah.pitch_limit then
-		self.config.ph.setting = -self.config.ah.pitch_limit
+	if config.ph.setting > config.ah.pitch_limit then
+		config.ph.setting = config.ah.pitch_limit
+	elseif config.ph.setting < -config.ah.pitch_limit then
+		config.ph.setting = -config.ah.pitch_limit
 	end
 	
 end
 
 function Autopilot:SpeedHold() -- Subscribed to InputPoll
 
-	if Game:GetState() ~= GUIState.Game or not self.panel_available or not self.config.sh.on or not IsValid(self.vehicle) then return end
+	if Game:GetState() ~= GUIState.Game or not self.panel_available or not config.sh.on or not IsValid(self.vehicle) then return end
 		
 	local air_speed = self:GetAirSpeed()
 	
-	local input = math.abs(air_speed - self.config.sh.setting) * self.config.sh.gain
-	if input > self.config.sh.max_input then input = self.config.sh.max_input end
+	local input = math.abs(air_speed - config.sh.setting) * config.sh.gain
+	if input > config.sh.max_input then input = config.sh.max_input end
 	
-	if air_speed < self.config.sh.setting and not self.config.oh.on then
+	if air_speed < config.sh.setting and not config.oh.on then
 		Input:SetValue(Action.PlaneIncTrust, input)
 	end
-	if air_speed > self.config.sh.setting then
+	if air_speed > config.sh.setting then
 		Input:SetValue(Action.PlaneDecTrust, input)
 	end
 	
@@ -1276,7 +868,7 @@ end
 
 function Autopilot:WaypointHold() -- Subscribed to InputPoll
 
-	if Game:GetState() ~= GUIState.Game or not self.panel_available or not self.config.wh.on or not IsValid(self.vehicle) then return end
+	if Game:GetState() ~= GUIState.Game or not self.panel_available or not config.wh.on or not IsValid(self.vehicle) then return end
 	
 	local waypoint, marker = Waypoint:GetPosition()
 	
@@ -1291,16 +883,16 @@ end
 
 function Autopilot:ApproachHold() -- Subscribed to InputPoll
 
-	if Game:GetState() ~= GUIState.Game or not self.panel_available or not self.config.oh.on or not IsValid(self.vehicle) then return end
+	if Game:GetState() ~= GUIState.Game or not self.panel_available or not config.oh.on or not IsValid(self.vehicle) then return end
 	
 	local position = self.vehicle:GetPosition()
 	
 	if not self.flare then
 		local distance = Vector3.Distance(self.approach.near_marker, position)
-		if distance > self.planes[self.model].flare_distance then
+		if distance > planes[self.model].flare_distance then
 			self.approach.farpoint = self.approach.near_marker + self.approach.angle * Vector3.Forward * distance
-			self.config.ah.setting = self.approach.farpoint.y - 200 - self.config.ah.bias
-			self.config.sh.setting = math.min(math.lerp(self.planes[self.model].landing_speed, self.planes[self.model].cruise_speed, distance / self.planes[self.model].slow_distance), self.planes[self.model].cruise_speed)
+			config.ah.setting = self.approach.farpoint.y - 200 - config.ah.bias
+			config.sh.setting = math.min(math.lerp(planes[self.model].landing_speed, planes[self.model].cruise_speed, distance / planes[self.model].slow_distance), planes[self.model].cruise_speed)
 			self.approach.target = math.lerp(self.approach.near_marker, self.approach.farpoint, 0.5)
 			self:FollowTargetXZ(self.approach.target)
 		else
@@ -1308,13 +900,13 @@ function Autopilot:ApproachHold() -- Subscribed to InputPoll
 			self:AHOff()
 			self:PHOn()
 			self.approach.target = self.approach.far_marker
-			self.config.ph.setting = self.planes[self.model].flare_pitch
-			self.config.sh.setting = self.planes[self.model].landing_speed
+			config.ph.setting = planes[self.model].flare_pitch
+			config.sh.setting = planes[self.model].landing_speed
 		end
 	else
 		local distance = Vector3.Distance(self.approach.far_marker, position)
 		local length = Vector3.Distance(self.approach.far_marker, self.approach.near_marker)
-		self.config.sh.setting = math.min(math.lerp(0, self.planes[self.model].landing_speed, distance / length), self.planes[self.model].landing_speed)
+		config.sh.setting = math.min(math.lerp(0, planes[self.model].landing_speed, distance / length), planes[self.model].landing_speed)
 		self:FollowTargetXZ(self.approach.target)
 	end
 	
@@ -1322,7 +914,7 @@ end
 
 function Autopilot:TargetHold() -- Subscribed to InputPoll
 
-	if Game:GetState() ~= GUIState.Game or not self.panel_available or not self.config.th.on or not IsValid(self.vehicle) then return end
+	if Game:GetState() ~= GUIState.Game or not self.panel_available or not config.th.on or not IsValid(self.vehicle) then return end
 	
 	if not IsValid(self.target.vehicle) or not self.target.vehicle:GetDriver() then
 		Chat:Print("Target lost.", Color.Orange)
@@ -1335,7 +927,7 @@ function Autopilot:TargetHold() -- Subscribed to InputPoll
 	local distance = Vector3.Distance(target_position, position)
 	local bias = distance / self.target.follow_distance
 	
-	self.config.sh.setting = math.clamp(bias * self.target.vehicle:GetLinearVelocity():Length() * 3.6, self.config.sh.min_setting, self.config.sh.max_setting)
+	config.sh.setting = math.clamp(bias * self.target.vehicle:GetLinearVelocity():Length() * 3.6, config.sh.min_setting, config.sh.max_setting)
 	
 	self:FollowTargetXZ(target_position)
 	self:FollowTargetY(target_position)
@@ -1348,7 +940,7 @@ function Autopilot:FollowTargetXZ(target_position) -- Heading-hold must be on
 	local dx = position.x - target_position.x
 	local dz = position.z - target_position.z
 	
-	self.config.hh.setting = self:YawToHeading(math.deg(math.atan2(dx, dz)))
+	config.hh.setting = self:YawToHeading(math.deg(math.atan2(dx, dz)))
 
 end
 
@@ -1358,7 +950,7 @@ function Autopilot:FollowTargetY(target_position) -- Pitch-hold must be on
 	local dy = position.y - target_position.y
 	local distance = Vector3.Distance(position, target_position)
 	
-	self.config.ph.setting = math.deg(math.asin(-dy / distance))
+	config.ph.setting = math.deg(math.asin(-dy / distance))
 
 end
 
