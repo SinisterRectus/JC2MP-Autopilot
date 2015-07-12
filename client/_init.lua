@@ -1,3 +1,7 @@
+function tostringint(n)
+	return tostring(math.floor(n + 0.5))
+end
+
 config = { 
 	["ap"] = {
 		["name"] = "Autopilot",
@@ -84,7 +88,7 @@ planes = {
 		["slow_distance"] = 1000,
 		["flare_distance"] = 50,
 		["flare_pitch"] = 3,
-		["cone_angle"] = 90
+		["cone_angle"] = 90,
 	},
 	[30] = { -- Si-47 Leopard
 		["available"] = true,
@@ -94,7 +98,7 @@ planes = {
 		["slow_distance"] = 1000,
 		["flare_distance"] = 100,
 		["flare_pitch"] = 3,
-		["cone_angle"] = 90
+		["cone_angle"] = 90,
 	},
 	[34] = { -- G9 Eclipse
 		["available"] = true,
@@ -104,7 +108,7 @@ planes = {
 		["slow_distance"] = 1500,
 		["flare_distance"] = 150,
 		["flare_pitch"] = 3,
-		["cone_angle"] = 75
+		["cone_angle"] = 75,
 	},
 	[39] = { -- Aeroliner 474
 		["available"] = true,
@@ -114,7 +118,7 @@ planes = {
 		["slow_distance"] = 1000,
 		["flare_distance"] = 100,
 		["flare_pitch"] = -1,
-		["cone_angle"] = 60
+		["cone_angle"] = 60,
 	},
 	[51] = { -- Cassius 192
 		["available"] = true,
@@ -124,7 +128,7 @@ planes = {
 		["slow_distance"] = 1000,
 		["flare_distance"] = 100,
 		["flare_pitch"] = 3,
-		["cone_angle"] = 75
+		["cone_angle"] = 75,
 	},
 	[59] = { -- Peek Airhawk 225
 		["available"] = true,
@@ -134,7 +138,7 @@ planes = {
 		["slow_distance"] = 1000,
 		["flare_distance"] = 20,
 		["flare_pitch"] = 0,
-		["cone_angle"] = 90
+		["cone_angle"] = 90,
 	},
 	[81] = { -- Pell Silverbolt 6
 		["available"] = true,
@@ -144,7 +148,7 @@ planes = {
 		["slow_distance"] = 1000,
 		["flare_distance"] = 20,
 		["flare_pitch"] = 3,
-		["cone_angle"] = 90
+		["cone_angle"] = 90,
 	},
 	[85] = { -- Bering I-86DP
 		["available"] = true,
@@ -154,7 +158,7 @@ planes = {
 		["slow_distance"] = 1000,
 		["flare_distance"] = 200,
 		["flare_pitch"] = 3,
-		["cone_angle"] = 60
+		["cone_angle"] = 60,
 	}
 }
 
