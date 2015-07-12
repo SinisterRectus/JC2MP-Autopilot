@@ -3,9 +3,12 @@
 class 'Autopilot'
 
 function Autopilot:__init()
-			
-	self.panel_available = false -- Whether you are in a plane with autopilot available
+
+	self.color = {Color.Orange, Color.Silver} -- Color scheme
 	
+	self.draw_target = true -- Whether to draw a target indicator for target-hold		
+	self.draw_approach = true -- Whether to draw a path for approach-hold
+		
 	self.two_keys = false -- If false then Z toggles both the panel and mouse
 	self.panel_toggle_button = "Z"
 	self.mouse_toggle_button = "M"
@@ -16,13 +19,14 @@ function Autopilot:__init()
 			local model = vehicle:GetModelId()
 			if planes[model] then
 				if planes[model].available then
-					self.panel_available = true
 					self.vehicle = vehicle
 					self.model = model
 				end
 			end
 		end
 	end
+	
+	if self.vehicle then self.panel_available = true else self.panel_available = false end
 
 	self:InitGUI()
 	
@@ -33,14 +37,15 @@ function Autopilot:__init()
 	Events:Subscribe("LocalPlayerEnterVehicle", self, self.EnterPlane)
 	Events:Subscribe("LocalPlayerExitVehicle", self, self.ExitPlane)
 	Events:Subscribe("EntityDespawn", self, self.PlaneDespawn)
+	
 	Events:Subscribe("InputPoll", self, self.RollHold)
 	Events:Subscribe("InputPoll", self, self.PitchHold)
 	Events:Subscribe("InputPoll", self, self.HeadingHold)
 	Events:Subscribe("InputPoll", self, self.AltitudeHold)
 	Events:Subscribe("InputPoll", self, self.SpeedHold)
 	Events:Subscribe("InputPoll", self, self.WaypointHold)
-	Events:Subscribe("InputPoll", self, self.ApproachHold)
-	Events:Subscribe("InputPoll", self, self.TargetHold)
+	Events:Subscribe("Render", self, self.ApproachHold)
+	Events:Subscribe("Render", self, self.TargetHold)
 	
 end
 
@@ -83,7 +88,7 @@ function Autopilot:InitGUI()
 		v.button = Button.Create(self.window)
 		v.button:SetText(config[k].name)
 		v.button:SetToggleable(true)
-		v.button:SetTextPressedColor(Color.Orange)
+		v.button:SetTextPressedColor(self.color[1])
 		
 		if config[k].setting then
 			v.label = Label.Create(self.window)
@@ -270,28 +275,38 @@ function Autopilot:APOn()
 end
 
 function Autopilot:RHOn()
-	self:APOn()
-	config.rh.on = true
+	if not self.scanning then
+		self:APOn()
+		config.rh.on = true
+	end
 end
 
 function Autopilot:PHOn()
-	self:APOn()
-	config.ph.on = true
+	if not self.scanning then
+		self:APOn()
+		config.ph.on = true
+	end
 end
 
 function Autopilot:HHOn()
-	self:RHOn()
-	config.hh.on = true
+	if not self.scanning then
+		self:RHOn()
+		config.hh.on = true
+	end
 end
 
 function Autopilot:AHOn()
-	self:PHOn()
-	config.ah.on = true
+	if not self.scanning and not config.th.on then
+		self:PHOn()
+		config.ah.on = true
+	end
 end
 
 function Autopilot:SHOn()
-	self:APOn()
-	config.sh.on = true
+	if not self.scanning then
+		self:APOn()
+		config.sh.on = true
+	end
 end
 
 function Autopilot:WHOn()
@@ -302,94 +317,18 @@ function Autopilot:WHOn()
 		self:HHOn()
 		config.wh.on = true
 	else
-		Chat:Print("Waypoint not set.", Color.Silver)
+		Chat:Print("Waypoint not set.", self.color[2])
 	end
 end
 
 function Autopilot:OHOn()
-
-	local position = self.vehicle:GetPosition()
-	local runway_name
-	local runway_direction
-	local airport_name
-	local nearest_marker
-	local nearest_marker_distance = math.huge
-	
-	for airport,runways in pairs(airports) do
-		for runway in pairs(runways) do
-		
-			local near_marker = airports[airport][runway].near_marker
-			local far_marker = airports[airport][runway].far_marker
-			local distance = Vector3.Distance(position, near_marker)
-				
-			if distance < airports[airport][runway].glide_length and distance < nearest_marker_distance then
-			
-				local dy = near_marker.y - position.y
-				
-				local runway_cone_angle = airports[airport][runway].cone_angle
-				local pitch_to_plane = math.deg(math.asin(-dy / distance))
-				local pitch_from_runway = airports[airport][runway].glide_pitch
-				local pitch_difference1 = self:DegreesDifference(pitch_to_plane, pitch_from_runway)
-				
-				if math.abs(pitch_difference1) < 0.5 * runway_cone_angle then
-				
-					local dx = near_marker.x - position.x
-					local dz = near_marker.z - position.z
-
-					local heading_to_plane = self:YawToHeading(math.deg(math.atan2(dx, dz)))
-					local heading_from_runway = self:YawToHeading(math.deg(math.atan2(far_marker.x - near_marker.x, far_marker.z - near_marker.z)))
-					local heading_difference1 = self:DegreesDifference(heading_to_plane, heading_from_runway)
-								
-					if math.abs(heading_difference1) < 0.5 * runway_cone_angle then
-					
-						local plane_cone_angle = planes[self.model].cone_angle
-						local pitch_to_runway = math.deg(math.asin(dy / distance))
-						local pitch_from_plane = self:GetPitch()
-						local pitch_difference2 = self:DegreesDifference(pitch_to_runway, pitch_from_plane)
-						
-						if math.abs(pitch_difference2) < 0.5 * plane_cone_angle then
-					
-							local heading_to_runway = self:YawToHeading(math.deg(math.atan2(-dx, -dz)))
-							local heading_from_plane = self:GetHeading()
-							local heading_difference2 = self:DegreesDifference(heading_from_plane, heading_to_runway)
-					
-							if math.abs(heading_difference2) < 0.5 * plane_cone_angle then
-
-								nearest_marker_distance = distance
-								nearest_marker = near_marker
-								airport_name = airport
-								runway_name = runway
-								runway_direction = heading_from_runway
-								
-							end
-							
-						end
-						
-					end
-					
-				end
-				
-			end
-			
-		end	
-	end
-	
-	if nearest_marker then
-		self.approach = {}
-		Chat:Print("Approach to "..airport_name.." RWY"..runway_name.." set.", Color.Orange)
-		self.approach.near_marker = airports[airport_name][runway_name].near_marker
-		self.approach.far_marker = airports[airport_name][runway_name].far_marker
-		self.approach.angle = Angle(math.rad(self:HeadingToYaw(runway_direction)), math.rad(airports[airport_name][runway_name].glide_pitch), 0)
-		self:WHOff()
-		self:HHOn()
-		self:AHOn()
-		self:SHOn()
-		config.oh.on = true
-		self.flare = false
-	else
-		Chat:Print("You are not approaching a runway.", Color.Silver)
-	end
-	
+	self:SHOff()
+	self:WHOff()
+	self:THOff()
+	config.oh.on = true
+	self.scanning = true
+	self.approach_timer = Timer()
+	Chat:Print("Scanning for runways...", self.color[2])
 end
 
 function Autopilot:THOn()
@@ -401,7 +340,7 @@ function Autopilot:THOn()
 	
 	for vehicle in Client:GetVehicles() do
 	
-		if vehicle:GetDriver() and vehicle ~= local_vehicle then
+		if --[[vehicle:GetDriver() and]] vehicle ~= local_vehicle then
 	
 			local model = vehicle:GetModelId()
 			if planes[model] then
@@ -444,32 +383,33 @@ function Autopilot:THOn()
 	end
 	
 	if nearest_target then
-		Chat:Print("Target acquired: "..tostring(nearest_target:GetDriver()), Color.Orange)
+		Chat:Print("Target acquired: "..tostring(nearest_target:GetDriver()), self.color[1])
 		self.target = {}
 		self.target.vehicle = nearest_target
 		self.target.follow_distance = 100
+		self:AHOff()
 		self:OHOff()
 		self:WHOff()
-		self:SHOn()
+		-- self:SHOn()
 		self:HHOn()
 		self:PHOn()
 		config.th.on = true
 	else
-		Chat:Print("No target found.", Color.Silver)
+		Chat:Print("No target found.", self.color[2])
 	end
 
 end
 
 function Autopilot:APOff()
+	self:OHOff()
+	self:THOff()
+	self:AHOff()
+	self:WHOff()
+	self:HHOff()
+	self:PHOff()
+	self:RHOff()
+	self:SHOff()
 	config.ap.on = false
-	config.rh.on = false
-	config.ph.on = false
-	config.hh.on = false
-	config.ah.on = false
-	config.sh.on = false
-	config.wh.on = false
-	config.oh.on = false
-	config.th.on = false
 end
 
 function Autopilot:RHOff()
@@ -479,27 +419,27 @@ function Autopilot:RHOff()
 end
 
 function Autopilot:PHOff()
-	if not config.ah.on and not config.oh.on then
+	if not config.th.on and not config.oh.on then
 		config.ph.on = false
 	end
 end
 
 function Autopilot:HHOff()
-	if not config.wh.on and not config.oh.on then
+	if not config.th.on and not config.wh.on and not config.oh.on then
 		config.hh.on = false
 		self:RHOff()
 	end
 end
 
 function Autopilot:AHOff()
-	if not config.oh.on or self.flare then
+	if not config.oh.on then
 		config.ah.on = false
 		self:PHOff()
 	end
 end
 
 function Autopilot:SHOff()
-	if not config.oh.on then
+	if not config.th.on and not config.oh.on then
 		config.sh.on = false
 	end
 end
@@ -516,22 +456,24 @@ end
 function Autopilot:OHOff()
 	if config.oh.on then
 		config.oh.on = false
+		self.scanning = nil
+		self.approach = nil
+		self.flare = nil
 		if not config.wh.on then
 			self:HHOff()
 		end
 		self:AHOff()
 		self:SHOff()
-		self.approach = nil
 	end
 end
 
 function Autopilot:THOff()
 	if config.th.on then
+		config.th.on = false
 		self:HHOff()
 		self:PHOff()
 		self:SHOff()
 		self.target = nil
-		config.th.on = false
 	end
 end
 
@@ -649,10 +591,6 @@ function Autopilot:WindowUpdate() -- Subscribed to Window Render
 		end
 	end
 		
-end
-
-function tostringint(n)
-	return tostring(math.floor(n + 0.5))
 end
 
 function Autopilot:DegreesDifference(theta1, theta2)
@@ -881,43 +819,142 @@ function Autopilot:WaypointHold() -- Subscribed to InputPoll
 	
 end
 
-function Autopilot:ApproachHold() -- Subscribed to InputPoll
+function Autopilot:ApproachHold() -- Subscribed to Render
 
 	if Game:GetState() ~= GUIState.Game or not self.panel_available or not config.oh.on or not IsValid(self.vehicle) then return end
 	
-	local position = self.vehicle:GetPosition()
+	if not self.approach and self.approach_timer:GetMilliseconds() > 1000 then
 	
-	if not self.flare then
-		local distance = Vector3.Distance(self.approach.near_marker, position)
-		if distance > planes[self.model].flare_distance then
-			self.approach.farpoint = self.approach.near_marker + self.approach.angle * Vector3.Forward * distance
-			config.ah.setting = self.approach.farpoint.y - 200 - config.ah.bias
-			config.sh.setting = math.min(math.lerp(planes[self.model].landing_speed, planes[self.model].cruise_speed, distance / planes[self.model].slow_distance), planes[self.model].cruise_speed)
-			self.approach.target = math.lerp(self.approach.near_marker, self.approach.farpoint, 0.5)
-			self:FollowTargetXZ(self.approach.target)
-		else
-			self.flare = true
-			self:AHOff()
-			self:PHOn()
-			self.approach.target = self.approach.far_marker
-			config.ph.setting = planes[self.model].flare_pitch
-			config.sh.setting = planes[self.model].landing_speed
+		local position = self.vehicle:GetPosition()
+		local runway_name
+		local runway_direction
+		local airport_name
+		local nearest_marker
+		local nearest_marker_distance = math.huge
+		
+		for airport,runways in pairs(airports) do
+			for runway in pairs(runways) do
+			
+				local near_marker = airports[airport][runway].near_marker
+				local far_marker = airports[airport][runway].far_marker
+				local distance = Vector3.Distance(position, near_marker)
+					
+				if distance < airports[airport][runway].glide_length and distance < nearest_marker_distance then
+				
+					local dy = near_marker.y - position.y
+					
+					local runway_cone_angle = airports[airport][runway].cone_angle
+					local pitch_to_plane = math.deg(math.asin(-dy / distance))
+					local pitch_from_runway = airports[airport][runway].glide_pitch
+					local pitch_difference1 = self:DegreesDifference(pitch_to_plane, pitch_from_runway)
+					
+					if math.abs(pitch_difference1) < 0.5 * runway_cone_angle then
+					
+						local dx = near_marker.x - position.x
+						local dz = near_marker.z - position.z
+
+						local heading_to_plane = self:YawToHeading(math.deg(math.atan2(dx, dz)))
+						local heading_from_runway = self:YawToHeading(math.deg(math.atan2(far_marker.x - near_marker.x, far_marker.z - near_marker.z)))
+						local heading_difference1 = self:DegreesDifference(heading_to_plane, heading_from_runway)
+									
+						if math.abs(heading_difference1) < 0.5 * runway_cone_angle then
+						
+							local plane_cone_angle = planes[self.model].cone_angle
+							local pitch_to_runway = math.deg(math.asin(dy / distance))
+							local pitch_from_plane = self:GetPitch()
+							local pitch_difference2 = self:DegreesDifference(pitch_to_runway, pitch_from_plane)
+							
+							if math.abs(pitch_difference2) < 0.5 * plane_cone_angle then
+						
+								local heading_to_runway = self:YawToHeading(math.deg(math.atan2(-dx, -dz)))
+								local heading_from_plane = self:GetHeading()
+								local heading_difference2 = self:DegreesDifference(heading_from_plane, heading_to_runway)
+						
+								if math.abs(heading_difference2) < 0.5 * plane_cone_angle then
+
+									nearest_marker_distance = distance
+									nearest_marker = near_marker
+									airport_name = airport
+									runway_name = runway
+									runway_direction = heading_from_runway
+									
+								end
+								
+							end
+							
+						end
+						
+					end
+					
+				end
+				
+			end	
 		end
-	else
-		local distance = Vector3.Distance(self.approach.far_marker, position)
-		local length = Vector3.Distance(self.approach.far_marker, self.approach.near_marker)
-		config.sh.setting = math.min(math.lerp(0, planes[self.model].landing_speed, distance / length), planes[self.model].landing_speed)
-		self:FollowTargetXZ(self.approach.target)
+		
+		if nearest_marker then
+			self.scanning = nil
+			self:HHOn()
+			self:AHOn()
+			self:SHOn()
+			self.approach = {}
+			Chat:Print("Approach to "..airport_name.." RWY"..runway_name.." set.", self.color[1])
+			self.approach.near_marker = airports[airport_name][runway_name].near_marker
+			self.approach.far_marker = airports[airport_name][runway_name].far_marker
+			self.approach.angle = Angle(math.rad(self:HeadingToYaw(runway_direction)), math.rad(airports[airport_name][runway_name].glide_pitch), 0)
+			self.approach.sweep_yaw = Angle(math.rad(airports[airport_name][runway_name].cone_angle / 2), 0, 0)
+			self.approach.glide_length = airports[airport_name][runway_name].glide_length
+			self.flare = nil
+		end
+		
+		self.approach_timer:Restart()
+	
+	end
+	
+	if self.approach then
+
+		local position = self.vehicle:GetPosition()
+		
+		if not self.flare then
+			local distance = Vector3.Distance(self.approach.near_marker, position)
+			if distance > planes[self.model].flare_distance then
+				self.approach.farpoint = self.approach.near_marker + self.approach.angle * Vector3.Forward * distance
+				config.ah.setting = self.approach.farpoint.y - 200 - config.ah.bias
+				config.sh.setting = math.min(math.lerp(planes[self.model].landing_speed, planes[self.model].cruise_speed, distance / planes[self.model].slow_distance), planes[self.model].cruise_speed)
+				self.approach.target = math.lerp(self.approach.near_marker, self.approach.farpoint, 0.5)
+				self:FollowTargetXZ(self.approach.target)
+			else
+				self.flare = true
+				self:AHOff()
+				self:PHOn()
+				self.approach.target = self.approach.far_marker
+				config.ph.setting = planes[self.model].flare_pitch
+				config.sh.setting = planes[self.model].landing_speed
+			end
+		else
+			local distance = Vector3.Distance(self.approach.far_marker, position)
+			local length = Vector3.Distance(self.approach.far_marker, self.approach.near_marker)
+			config.sh.setting = math.min(math.lerp(0, planes[self.model].landing_speed, distance / length), planes[self.model].landing_speed)
+			self:FollowTargetXZ(self.approach.target)
+		end
+
+		if self.draw_approach then
+		
+			Render:DrawLine(self.approach.near_marker, self.approach.near_marker + self.approach.angle * Vector3.Forward * self.approach.glide_length, self.color[1])
+			Render:DrawLine(self.approach.near_marker, self.approach.near_marker + self.approach.angle * self.approach.sweep_yaw * Vector3.Forward * self.approach.glide_length, Color.Cyan)
+			Render:DrawLine(self.approach.near_marker, self.approach.near_marker + self.approach.angle * -self.approach.sweep_yaw * Vector3.Forward * self.approach.glide_length, Color.Cyan)
+			
+		end
+		
 	end
 	
 end
 
-function Autopilot:TargetHold() -- Subscribed to InputPoll
+function Autopilot:TargetHold() -- Subscribed to Render
 
 	if Game:GetState() ~= GUIState.Game or not self.panel_available or not config.th.on or not IsValid(self.vehicle) then return end
 	
-	if not IsValid(self.target.vehicle) or not self.target.vehicle:GetDriver() then
-		Chat:Print("Target lost.", Color.Orange)
+	if not IsValid(self.target.vehicle) --[[or not self.target.vehicle:GetDriver()]] then
+		Chat:Print("Target lost.", self.color[1])
 		self:THOff()
 		return
 	end
@@ -931,6 +968,24 @@ function Autopilot:TargetHold() -- Subscribed to InputPoll
 	
 	self:FollowTargetXZ(target_position)
 	self:FollowTargetY(target_position)
+	
+	if self.draw_target then
+	
+		local name = self.target.vehicle:GetName()
+		local model = self.target.vehicle:GetModelId()
+		local center = Render:WorldToScreen(target_position + self.target.vehicle:GetAngle() * Vector3.Up * 2)
+		
+		local n = Render.Height * self.text_scale
+		local m = 0.75 * n
+		
+		Render:DrawLine(center + Vector2(-n, -m), center + Vector2(-n,  m), self.color[1])
+		Render:DrawLine(center + Vector2(-m,  n), center + Vector2( m,  n), self.color[1])
+		Render:DrawLine(center + Vector2( n,  m), center + Vector2( n, -m), self.color[1])
+		Render:DrawLine(center + Vector2( m, -n), center + Vector2(-m, -n), self.color[1])
+		
+		Render:DrawText(center + Vector2(n * 1.25, -0.3 * Render:GetTextHeight(tostring(distance), 1.2 * self.text_size)), tostringint(distance).." m", self.color[1], 1.2 * self.text_size)
+		
+	end
 
 end
 
