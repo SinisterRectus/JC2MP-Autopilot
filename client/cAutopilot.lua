@@ -45,8 +45,6 @@ function Autopilot:__init()
 	Events:Subscribe("Render", self, self.ApproachHold)
 	Events:Subscribe("Render", self, self.TargetHold)
 	
-	Events:Subscribe("LocalPlayerChat", self, self.Debug)
-	
 end
 
 function Autopilot:InitGUI()
@@ -158,22 +156,6 @@ function Autopilot:InitGUI()
 	
 	self.window:Subscribe("Render", self, self.WindowUpdate)
 	self.window:Subscribe("Resize", self, self.WindowResize)
-
-end
-
-function Autopilot:Debug(args)
-
-	if args.text == "/ap on" then
-		self:APOn()
-		self.vehicle = LocalPlayer:GetVehicle()
-		self.model = self.vehicle:GetModelId()
-		return false
-	end
-	
-	if args.text == "/sh quick" then
-		self:SHQuick()
-		return false
-	end
 
 end
 
