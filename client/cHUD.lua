@@ -74,7 +74,7 @@ function HUD:Draw() -- Subscribed to Render
 	
 	local column2_position = Vector2(self.position.x + 14 * self.size, self.position.y)
 
-	local heading = Autopilot:YawToHeading(math.deg(self.angle.yaw))
+	local heading = YawToHeading(math.deg(self.angle.yaw))
 	
 	local roll_string = "Roll: "..tostringint(math.deg(self.angle.roll)).."°"
 	local pitch_string = "Pitch: "..tostringint(math.deg(self.angle.pitch)).."°"
