@@ -2,6 +2,63 @@ function tostringint(n)
 	return tostring(math.floor(n + 0.5))
 end
 
+function DegreesDifference(theta1, theta2)
+	return (theta2 - theta1 + 180) % 360 - 180
+end
+
+function OppositeDegrees(theta)
+	return (theta + 180) % 360
+end
+
+function YawToHeading(yaw)
+	if yaw < 0 then
+		return -yaw
+	else
+		return 360 - yaw
+	end
+end
+
+function HeadingToYaw(heading)
+	if heading < 180 then
+		return -heading
+	else
+		return 360 - heading
+	end
+end
+
+function Vehicle:GetRoll()
+	return math.deg(self:GetAngle().roll)
+end
+
+function Vehicle:GetPitch()
+	return math.deg(self:GetAngle().pitch)
+end
+
+function Vehicle:GetYaw()
+	return math.deg(self:GetAngle().yaw)
+end
+
+function Vehicle:GetHeading()
+	local yaw = self:GetYaw()
+	return YawToHeading(yaw)
+end
+
+function Vehicle:GetAltitude()
+	return self:GetPosition().y - 200
+end
+
+function Vehicle:GetAirSpeed()
+	return self:GetLinearVelocity():Length() * 3.6
+end
+
+function Vehicle:GetVerticalSpeed()
+	return self:GetLinearVelocity().y * 3.6
+end
+
+function Vehicle:GetGroundSpeed()
+	return Vector2(self:GetLinearVelocity().x, self:GetLinearVelocity().z):Length() * 3.6
+end
+
 config = { 
 	["ap"] = {
 		["name"] = "Autopilot",
