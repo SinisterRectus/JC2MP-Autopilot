@@ -49,261 +49,232 @@ end
 
 function Autopilot:InitGUI()
 
-	self.window = Window.Create()
-	
 	self.text_scale = 0.03
-	self.window.position = Vector2(0.63, 0.04)
-	self.window.size = Vector2(0.28, 0.28)
-	self.window.button_size = Vector2(0.22, 0.095)
-	self.window.button_position = Vector2(0, 0.105)
-	self.window.label_size = Vector2(0.16, self.window.button_size.y)
-	self.window.slider_size = Vector2(0.31, self.window.button_size.y)
 	
-	self.window:SetTitle("Autopilot Panel")
-	self.window:SetVisible(false)
-	self.window:SetClosable(false)
+	self.gui = {}
 	
-	self.window:SetSizeRel(self.window.size)
-	self.window:SetPositionRel(self.window.position)
+	self.gui.window = Window.Create()
+	self.gui.position = Vector2(0.63, 0.04)
+	self.gui.size = Vector2(0.28, 0.28)
+	self.gui.button_size = Vector2(0.22, 0.095)
+	self.gui.button_position = Vector2(0, 0.105)
+	self.gui.label_size = Vector2(0.16, self.gui.button_size.y)
+	self.gui.slider_size = Vector2(0.31, self.gui.button_size.y)
 	
-	self.window.setting = {
-		["ap"] = {},
-		["rh"] = {},
-		["ph"] = {},
-		["hh"] = {},
-		["ah"] = {},
-		["sh"] = {},
-		["wh"] = {},
-		["oh"] = {},
-		["th"] = {}
-	}
+	self.gui.window:SetTitle("Autopilot Panel")
+	self.gui.window:SetVisible(true)
+	self.gui.window:SetClosable(false)
 	
-	self.break_line = Rectangle.Create(self.window)
-	self.break_line:SetColor(Color(64, 64, 64))
+	self.gui.window:SetSizeRel(self.gui.size)
+	self.gui.window:SetPositionRel(self.gui.position)
+	
+	self.gui.line = Rectangle.Create(self.gui.window)
+	self.gui.line:SetColor(Color(64, 64, 64))
+	
+	self.gui.st = {}
+	
+	self.gui.st.window = Window.Create()	
+	self.gui.st.window:SetSizeRel(self.gui.size)
+	self.gui.st.window:SetPosition(self.gui.window:GetPosition() + Vector2(0, self.gui.window:GetHeight()))
+	
+	self.gui.st.window:SetTitle("")
+	self.gui.st.window:SetVisible(true)
+	self.gui.st.window:SetClosable(false)
+	
+	for k in pairs(units) do
+		if #units[k] > 1 then
+			self.gui.st[k] = {}
+			self.gui.st[k].label = Label.Create(self.gui.st.window)
+			self.gui.st[k].label:SetText(k:sub(1,1):upper()..k:sub(2))
+			for i,v in ipairs(units[k]) do
+				self.gui.st[k][i] = LabeledRadioButton.Create(self.gui.st.window)
+				self.gui.st[k][i]:GetLabel():SetText(v[1])
+				self.gui.st[k][i]:GetLabel():SetMouseInputEnabled(false)
+				self.gui.st[k][i]:GetRadioButton():Subscribe("Checked", function(args)
+					settings[k] = i
+					for _,w in ipairs(self.gui.st[k]) do
+						if w ~= self.gui.st[k][i] then
+							w:GetRadioButton():SetChecked(false)
+						end
+					end
+				end)
+			end
+			self.gui.st[k][settings[k]]:GetRadioButton():SetChecked(true)
+		end
+	end
+	
+	self.gui.st.ap = {}
+	self.gui.st.ap.gain = {}
+	self.gui.st.ap.input = {}
+	
+	self.gui.st.ap.gain.label = Label.Create(self.gui.st.window)
+	self.gui.st.ap.gain.label:SetText("Gain")
+	
+	self.gui.st.ap.input.label = Label.Create(self.gui.st.window)
+	self.gui.st.ap.input.label:SetText("Input")
+	
+	self.gui.ap = {}
 		
-	for k,v in pairs(self.window.setting) do
+	for i = 1,#config do
 	
-		v.button = Button.Create(self.window)
-		v.button:SetText(config[k].name)
+		table.insert(self.gui.ap, {})
+		local v = self.gui.ap[#self.gui.ap]
+	
+		v.button = Button.Create(self.gui.window)
+		v.button:SetText(config[i].name)
 		v.button:SetToggleable(true)
 		v.button:SetTextPressedColor(self.color[1])
 		
-		if config[k].setting then
-			v.label = Label.Create(self.window)
-			v.slider = HorizontalSlider.Create(self.window)
-			v.slider:SetRange(config[k].min_setting, config[k].max_setting)
+		if config[i].setting then
 			
-			if config[k].step then
+			v.label = Label.Create(self.gui.window)
+			v.slider = HorizontalSlider.Create(self.gui.window)
+			v.slider:SetRange(config[i].min_setting, config[i].max_setting)
+			v.slider:Subscribe("ValueChanged", function(args)
+				config[i].setting = args:GetValue()				
+			end)
+			
+			if config[i].step then
 				v.slider:SetClampToNotches(true)
-				v.slider:SetNotchCount((config[k].max_setting-config[k].min_setting)/config[k].step)
+				v.slider:SetNotchCount((config[i].max_setting-config[i].min_setting)/config[i].step)
 			end
 			
-			v.inc = Button.Create(self.window)
-			v.dec = Button.Create(self.window)
+			v.inc = Button.Create(self.gui.window)
+			v.dec = Button.Create(self.gui.window)
 			v.inc:SetText("+")
 			v.dec:SetText("-")
+			v.inc:Subscribe("Press", function()
+				if config[i].setting < config[i].max_setting then
+					config[i].setting = config[i].setting + (config[i].step or 1)
+				end			
+			end)
+			v.dec:Subscribe("Press", function()
+				if config[i].setting > config[i].min_setting then
+					config[i].setting = config[i].setting - (config[i].step or 1)
+				end
+			end)
 			
-			v.quick = Button.Create(self.window)
-			v.quick:SetText(config[k].quick)
+			v.quick = Button.Create(self.gui.window)
+			v.quick:SetText(config[i].quick)
 			
+			table.insert(self.gui.st.ap, {})
+			local k = #self.gui.st.ap
+			local w = self.gui.st.ap[k]
+			self.gui.st.ap[k] = Label.Create(self.gui.st.window)
+			self.gui.st.ap[k]:SetText(config[i].name)
+			self.gui.st.ap.gain[k] = TextBoxNumeric.Create(self.gui.st.window)
+			self.gui.st.ap.gain[k]:SetNegativeAllowed(false)
+			self.gui.st.ap.gain[k]:SetText(tostring(config[i].gain))
+			self.gui.st.ap.gain[k]:Subscribe("TextChanged", function()
+				config[i].gain = tonumber(self.gui.st.ap.gain[k]:GetText()) or 0
+			end)
+			if config[i].input then
+				self.gui.st.ap.input[k] = TextBoxNumeric.Create(self.gui.st.window)
+				self.gui.st.ap.input[k]:SetNegativeAllowed(false)
+				self.gui.st.ap.input[k]:SetText(tostring(config[i].input))
+				self.gui.st.ap.input[k]:Subscribe("TextChanged", function()
+					config[i].input = tonumber(self.gui.st.ap.input[k]:GetText()) or 0
+				end)
+			end
 		end
 		
 	end
 	
-	self.window.setting.ap.button:Subscribe("ToggleOn", self, self.APOn)
-	self.window.setting.rh.button:Subscribe("ToggleOn", self, self.RHOn)
-	self.window.setting.ph.button:Subscribe("ToggleOn", self, self.PHOn)
-	self.window.setting.hh.button:Subscribe("ToggleOn", self, self.HHOn)
-	self.window.setting.ah.button:Subscribe("ToggleOn", self, self.AHOn)
-	self.window.setting.sh.button:Subscribe("ToggleOn", self, self.SHOn)
-	self.window.setting.wh.button:Subscribe("ToggleOn", self, self.WHOn)
-	self.window.setting.oh.button:Subscribe("ToggleOn", self, self.OHOn)
-	self.window.setting.th.button:Subscribe("ToggleOn", self, self.THOn)
+	self.gui.ap[1].button:Subscribe("ToggleOn", self, self.APOn)
+	self.gui.ap[2].button:Subscribe("ToggleOn", self, self.RHOn)
+	self.gui.ap[3].button:Subscribe("ToggleOn", self, self.PHOn)
+	self.gui.ap[4].button:Subscribe("ToggleOn", self, self.HHOn)
+	self.gui.ap[5].button:Subscribe("ToggleOn", self, self.AHOn)
+	self.gui.ap[6].button:Subscribe("ToggleOn", self, self.SHOn)
+	self.gui.ap[7].button:Subscribe("ToggleOn", self, self.WHOn)
+	self.gui.ap[8].button:Subscribe("ToggleOn", self, self.OHOn)
+	self.gui.ap[9].button:Subscribe("ToggleOn", self, self.THOn)
+	self.gui.ap[10].button:Subscribe("ToggleOn", self, self.STOn)
 	
-	self.window.setting.ap.button:Subscribe("ToggleOff", self, self.APOff)
-	self.window.setting.rh.button:Subscribe("ToggleOff", self, self.RHOff)
-	self.window.setting.ph.button:Subscribe("ToggleOff", self, self.PHOff)
-	self.window.setting.hh.button:Subscribe("ToggleOff", self, self.HHOff)
-	self.window.setting.ah.button:Subscribe("ToggleOff", self, self.AHOff)
-	self.window.setting.sh.button:Subscribe("ToggleOff", self, self.SHOff)
-	self.window.setting.wh.button:Subscribe("ToggleOff", self, self.WHOff)
-	self.window.setting.oh.button:Subscribe("ToggleOff", self, self.OHOff)
-	self.window.setting.th.button:Subscribe("ToggleOff", self, self.THOff)
+	self.gui.ap[1].button:Subscribe("ToggleOff", self, self.APOff)
+	self.gui.ap[2].button:Subscribe("ToggleOff", self, self.RHOff)
+	self.gui.ap[3].button:Subscribe("ToggleOff", self, self.PHOff)
+	self.gui.ap[4].button:Subscribe("ToggleOff", self, self.HHOff)
+	self.gui.ap[5].button:Subscribe("ToggleOff", self, self.AHOff)
+	self.gui.ap[6].button:Subscribe("ToggleOff", self, self.SHOff)
+	self.gui.ap[7].button:Subscribe("ToggleOff", self, self.WHOff)
+	self.gui.ap[8].button:Subscribe("ToggleOff", self, self.OHOff)
+	self.gui.ap[9].button:Subscribe("ToggleOff", self, self.THOff)
+	self.gui.ap[10].button:Subscribe("ToggleOff", self, self.STOff)
 	
-	self.window.setting.rh.slider:Subscribe("ValueChanged", self, self.RHSlider)
-	self.window.setting.ph.slider:Subscribe("ValueChanged", self, self.PHSlider)
-	self.window.setting.hh.slider:Subscribe("ValueChanged", self, self.HHSlider)
-	self.window.setting.ah.slider:Subscribe("ValueChanged", self, self.AHSlider)
-	self.window.setting.sh.slider:Subscribe("ValueChanged", self, self.SHSlider)
+	self.gui.ap[2].quick:Subscribe("Press", self, self.RHQuick)
+	self.gui.ap[3].quick:Subscribe("Press", self, self.PHQuick)
+	self.gui.ap[4].quick:Subscribe("Press", self, self.HHQuick)
+	self.gui.ap[5].quick:Subscribe("Press", self, self.AHQuick)
+	self.gui.ap[6].quick:Subscribe("Press", self, self.SHQuick)
 	
-	self.window.setting.rh.inc:Subscribe("Press", self, self.RHIncrease)
-	self.window.setting.ph.inc:Subscribe("Press", self, self.PHIncrease)
-	self.window.setting.hh.inc:Subscribe("Press", self, self.HHIncrease)
-	self.window.setting.ah.inc:Subscribe("Press", self, self.AHIncrease)
-	self.window.setting.sh.inc:Subscribe("Press", self, self.SHIncrease)
-	
-	self.window.setting.rh.dec:Subscribe("Press", self, self.RHDecrease)
-	self.window.setting.ph.dec:Subscribe("Press", self, self.PHDecrease)
-	self.window.setting.hh.dec:Subscribe("Press", self, self.HHDecrease)
-	self.window.setting.ah.dec:Subscribe("Press", self, self.AHDecrease)
-	self.window.setting.sh.dec:Subscribe("Press", self, self.SHDecrease)
-	
-	self.window.setting.rh.quick:Subscribe("Press", self, self.RHQuick)
-	self.window.setting.ph.quick:Subscribe("Press", self, self.PHQuick)
-	self.window.setting.hh.quick:Subscribe("Press", self, self.HHQuick)
-	self.window.setting.ah.quick:Subscribe("Press", self, self.AHQuick)
-	self.window.setting.sh.quick:Subscribe("Press", self, self.SHQuick)
-	
-	self.window:Subscribe("Render", self, self.WindowUpdate)
-	self.window:Subscribe("Resize", self, self.WindowResize)
+	self.gui.window:Subscribe("Render", self, self.WindowUpdate)
+	self.gui.window:Subscribe("Resize", self, self.WindowResize)
+	self.gui.st.window:Subscribe("Resize", self, self.WindowResize)
 
-end
-
-function Autopilot:RHSlider(args)
-	config.rh.setting = args:GetValue()
-end
-
-function Autopilot:PHSlider(args)
-	config.ph.setting = args:GetValue()
-end
-
-function Autopilot:HHSlider(args)
-	config.hh.setting = args:GetValue()
-end
-
-function Autopilot:AHSlider(args)
-	config.ah.setting = args:GetValue()
-end
-
-function Autopilot:SHSlider(args)
-	config.sh.setting = args:GetValue()
 end
 
 function Autopilot:RHQuick(args)
-	config.rh.setting = 0
+	config[2].setting = 0
 	self:RHOn()
 end
 
 function Autopilot:PHQuick(args)
-	config.ph.setting = 0
+	config[3].setting = 0
 	self:PHOn()
 end
 
 function Autopilot:HHQuick(args)
-	config.hh.setting = self.vehicle:GetHeading()
+	config[4].setting = self.vehicle:GetHeading()
 	self:HHOn()
 end
 
 function Autopilot:AHQuick(args)
-	config.ah.setting = self.vehicle:GetAltitude()
+	config[5].setting = self.vehicle:GetAltitude()
 	self:AHOn()
 end
 
 function Autopilot:SHQuick(args)
-	config.sh.setting = planes[self.model].cruise_speed
+	config[6].setting = planes[self.model].cruise_speed
 	self:SHOn()
 end
 
-function Autopilot:RHIncrease()
-	if config.rh.setting < config.rh.max_setting then
-		config.rh.setting = config.rh.setting + 1
-	end
-end
-
-function Autopilot:PHIncrease()
-	if config.ph.setting < config.ph.max_setting then
-		config.ph.setting = config.ph.setting + 1
-	end
-end
-
-function Autopilot:HHIncrease()
-	if config.hh.setting == 360 then
-		config.hh.setting = 1
-	elseif config.hh.setting < config.hh.max_setting then
-		config.hh.setting = config.hh.setting + 1
-	end
-end
-
-function Autopilot:AHIncrease()
-	if config.ah.setting < config.ah.max_setting then
-		config.ah.setting = config.ah.setting + config.ah.step
-	end
-end
-
-function Autopilot:SHIncrease()
-	if config.sh.setting < config.sh.max_setting then
-		config.sh.setting = config.sh.setting + config.sh.step
-	end
-end
-
-function Autopilot:RHDecrease()
-	if config.rh.setting > config.rh.min_setting then
-		config.rh.setting = config.rh.setting - 1
-	end
-end
-
-function Autopilot:PHDecrease()
-	if config.ph.setting > config.ph.min_setting then
-		config.ph.setting = config.ph.setting - 1
-	end
-end
-
-function Autopilot:HHDecrease()
-	if config.hh.setting == 0 then
-		config.hh.setting = 359
-	elseif config.hh.setting > config.hh.min_setting then
-		config.hh.setting = config.hh.setting - 1
-	end
-end
-
-function Autopilot:AHDecrease()
-	if config.ah.setting > config.ah.min_setting then
-		config.ah.setting = config.ah.setting - config.ah.step
-	end
-end
-
-function Autopilot:SHDecrease()
-	if config.sh.setting > config.sh.min_setting then
-		config.sh.setting = config.sh.setting - config.sh.step
-	end
-end
-
 function Autopilot:APOn()
-	config.ap.on = true
+	config[1].on = true
 end
 
 function Autopilot:RHOn()
 	if not self.scanning then
 		self:APOn()
-		config.rh.on = true
+		config[2].on = true
 	end
 end
 
 function Autopilot:PHOn()
 	if not self.scanning then
 		self:APOn()
-		config.ph.on = true
+		config[3].on = true
 	end
 end
 
 function Autopilot:HHOn()
 	if not self.scanning then
 		self:RHOn()
-		config.hh.on = true
+		config[4].on = true
 	end
 end
 
 function Autopilot:AHOn()
-	if not self.scanning and not config.th.on then
+	if not self.scanning and not config[9].on then
 		self:PHOn()
-		config.ah.on = true
+		config[5].on = true
 	end
 end
 
 function Autopilot:SHOn()
 	if not self.scanning then
 		self:APOn()
-		config.sh.on = true
+		config[6].on = true
 	end
 end
 
@@ -313,7 +284,7 @@ function Autopilot:WHOn()
 		self:OHOff()
 		self:THOff()
 		self:HHOn()
-		config.wh.on = true
+		config[7].on = true
 	else
 		Chat:Print("Waypoint not set.", self.color[2])
 	end
@@ -324,7 +295,7 @@ function Autopilot:OHOn()
 	self:SHOff()
 	self:WHOff()
 	self:THOff()
-	config.oh.on = true
+	config[8].on = true
 	self.scanning = true
 	self.approach_timer = Timer()
 	Chat:Print("Scanning for runways...", self.color[2])
@@ -335,10 +306,16 @@ function Autopilot:THOn()
 	self:SHOff()
 	self:WHOff()
 	self:OHOff()
-	config.th.on = true
+	config[9].on = true
 	self.scanning = true
 	self.target_timer = Timer()
 	Chat:Print("Scanning for targets...", self.color[2])
+end
+
+function Autopilot:STOn()
+	self:WindowResize()
+	config[10].on = true
+	self.gui.st.window:SetVisible(true)
 end
 
 function Autopilot:APOff()
@@ -350,57 +327,57 @@ function Autopilot:APOff()
 	self:PHOff()
 	self:RHOff()
 	self:SHOff()
-	config.ap.on = false
+	config[1].on = false
 end
 
 function Autopilot:RHOff()
-	if not config.wh.on and not config.hh.on then
-		config.rh.on = false
+	if not config[7].on and not config[4].on then
+		config[2].on = false
 	end
 end
 
 function Autopilot:PHOff()
-	if not config.ah.on and not config.th.on and not config.oh.on then
-		config.ph.on = false
+	if not config[5].on and not config[9].on and not config[8].on then
+		config[3].on = false
 	end
 end
 
 function Autopilot:HHOff()
-	if not config.wh.on and not config.th.on and not config.oh.on then
-		config.hh.on = false
+	if not config[7].on and not config[9].on and not config[8].on then
+		config[4].on = false
 		self:RHOff()
 	end
 end
 
 function Autopilot:AHOff()
-	if not config.oh.on then
-		config.ah.on = false
+	if not config[8].on then
+		config[5].on = false
 		self:PHOff()
 	end
 end
 
 function Autopilot:SHOff()
-	if not config.th.on and not config.oh.on then
-		config.sh.on = false
+	if not config[9].on and not config[8].on then
+		config[6].on = false
 	end
 end
 
 function Autopilot:WHOff()
-	if config.wh.on then
-		config.wh.on = false
-		if not config.oh.on then
+	if config[7].on then
+		config[7].on = false
+		if not config[8].on then
 			self:HHOff()
 		end
 	end
 end
 
 function Autopilot:OHOff()
-	if config.oh.on then
-		config.oh.on = false
+	if config[8].on then
+		config[8].on = false
 		self.scanning = nil
 		self.approach = nil
 		self.flare = nil
-		if not config.wh.on then
+		if not config[7].on then
 			self:HHOff()
 		end
 		self:AHOff()
@@ -409,8 +386,8 @@ function Autopilot:OHOff()
 end
 
 function Autopilot:THOff()
-	if config.th.on then
-		config.th.on = false
+	if config[9].on then
+		config[9].on = false
 		self.scanning = nil
 		self.target = nil
 		self:HHOff()
@@ -419,12 +396,18 @@ function Autopilot:THOff()
 	end
 end
 
+function Autopilot:STOff()
+	config[10].on = false
+	self.gui.st.window:SetVisible(false)
+end
+
 function Autopilot:PanelOpen(args) -- Subscribed to KeyUp
 
 	if self.two_keys then
 	
 		if args.key == string.byte(self.panel_toggle_button) and self.panel_available then
-			self.window:SetVisible(not self.window:GetVisible())
+			self.gui.window:SetVisible(not self.gui.window:GetVisible())
+			self:STOff()
 		end
 		
 		if args.key == string.byte(self.mouse_toggle_button) and self.panel_available then
@@ -434,8 +417,9 @@ function Autopilot:PanelOpen(args) -- Subscribed to KeyUp
 	else
 	
 		if args.key == string.byte(self.panel_toggle_button) and self.panel_available then
-			self.window:SetVisible(not self.window:GetVisible())
-			Mouse:SetVisible(self.window:GetVisible())
+			self.gui.window:SetVisible(not self.gui.window:GetVisible())
+			self:STOff()
+			Mouse:SetVisible(self.gui.window:GetVisible())
 		end
 		
 	end
@@ -449,17 +433,17 @@ function Autopilot:InputBlock(args) -- Subscribed to LocalPlayerInput
 			return false
 		end
 	end
-	if config.rh.on then
+	if config[2].on then
 		if i == 60 or i == 61 then
 			return false
 		end
 	end
-	if config.ph.on then
+	if config[3].on then
 		if i == 58 or i == 59 then
 			return false
 		end
 	end
-	if config.sh.on then
+	if config[6].on then
 		if i == 64 or i == 65 then
 			return false
 		end
@@ -467,57 +451,114 @@ function Autopilot:InputBlock(args) -- Subscribed to LocalPlayerInput
 end
 
 function Autopilot:ResolutionChange() -- Subscribe to ResolutionChange
-	self.window:SetSizeRel(self.window.size)
-	self.window:SetPositionRel(self.window.position)
+	self.gui.window:SetSizeRel(self.gui.size)
+	self.gui.window:SetPositionRel(self.gui.position)
+	self.gui.st.window:SetSize(self.gui.window:GetSize())
+	self.gui.st.window:SetPosition(self.gui.window:GetPosition() + Vector2(0, self.gui.window:GetHeight()))
 	self:WindowResize()
 end
 	
 function Autopilot:WindowResize() -- Subscribed to ModuleLoad and Window Resize
 
-	local window_size = self.window:GetSize()
+	local window_size = self.gui.window:GetSize()
 
 	self.text_size = window_size:Length() * self.text_scale
 	
-	self.window.setting.ap.button:SetPositionRel(self.window.button_position * 0)
-	self.window.setting.rh.button:SetPositionRel(self.window.button_position * 1)
-	self.window.setting.ph.button:SetPositionRel(self.window.button_position * 2)
-	self.window.setting.hh.button:SetPositionRel(self.window.button_position * 3)
-	self.window.setting.ah.button:SetPositionRel(self.window.button_position * 4)
-	self.window.setting.sh.button:SetPositionRel(self.window.button_position * 5)
+	for i = 1,6 do
+		self.gui.ap[i].button:SetPositionRel(self.gui.button_position * (i-1))
+	end
 	
-	self.window.setting.wh.button:SetPositionRel(self.window.button_position * 7)
-	self.window.setting.oh.button:SetPositionRel(Vector2(self.window.button_position.x + self.window.button_size.x * 1.03, self.window.button_position.y * 7))
-	self.window.setting.th.button:SetPositionRel(Vector2(self.window.button_position.x + self.window.button_size.x * 2.06, self.window.button_position.y * 7))
+	self.gui.ap[7].button:SetPositionRel(self.gui.button_position * 7)
+	self.gui.ap[8].button:SetPositionRel(Vector2(self.gui.button_position.x + self.gui.button_size.x * 1.05, self.gui.button_position.y * 7))
+	self.gui.ap[9].button:SetPositionRel(Vector2(self.gui.button_position.x + self.gui.button_size.x * 2.10, self.gui.button_position.y * 7))
+	self.gui.ap[10].button:SetPositionRel(Vector2(self.gui.button_position.x + self.gui.button_size.x * 3.41, self.gui.button_position.y * 7))
 	
-	self.break_line:SetPositionRel(self.window.button_position * 6.35)
-	self.break_line:SetSizeRel(Vector2(window_size.x, self.window.button_size.y * 0.2))
+	self.gui.line:SetPositionRel(self.gui.button_position * 6.35)
+	self.gui.line:SetSizeRel(Vector2(window_size.x, self.gui.button_size.y * 0.2))
 	
-	for k,v in pairs(self.window.setting) do
+	for i,v in pairs(self.gui.ap) do
 
-		v.button:SetSizeRel(self.window.button_size)
+		v.button:SetSizeRel(self.gui.button_size)
 		v.button:SetTextSize(self.text_size)
 		
-		if config[k].setting then
+		if config[i].setting then
 		
-			v.label:SetSizeRel(self.window.label_size)
+			v.label:SetSizeRel(self.gui.label_size)
 			v.label:SetTextSize(self.text_size)
 			v.label:SetPositionRel(v.button:GetPositionRel() + Vector2(v.button:GetWidthRel() * 1.06, v.button:GetHeightRel() * 0.2))
 			
-			v.slider:SetSizeRel(self.window.slider_size)
+			v.slider:SetSizeRel(self.gui.slider_size)
 			v.slider:SetPositionRel(v.label:GetPositionRel() + Vector2(v.label:GetWidthRel(), v.label:GetHeightRel() * -0.3))
 			
-			v.dec:SetSizeRel(Vector2(self.window.button_size.x / 3.5, self.window.button_size.y))
+			v.dec:SetSizeRel(Vector2(self.gui.button_size.x / 3.5, self.gui.button_size.y))
 			v.dec:SetTextSize(self.text_size)
 			v.dec:SetPositionRel(v.button:GetPositionRel() + Vector2(v.button:GetWidthRel() * 3.2, 0))
 			
-			v.inc:SetSizeRel(Vector2(self.window.button_size.x / 3.5, self.window.button_size.y))
+			v.inc:SetSizeRel(Vector2(self.gui.button_size.x / 3.5, self.gui.button_size.y))
 			v.inc:SetTextSize(self.text_size)
 			v.inc:SetPositionRel(v.dec:GetPositionRel() + Vector2(0.065, 0))
 			
-			v.quick:SetSizeRel(Vector2(self.window.button_size.x / 1.5, self.window.button_size.y))
+			v.quick:SetSizeRel(Vector2(self.gui.button_size.x / 1.5, self.gui.button_size.y))
 			v.quick:SetTextSize(self.text_size)
 			v.quick:SetPositionRel(v.inc:GetPositionRel() + Vector2(0.065, 0))
 			
+		end
+	end
+	
+	local column1 = 0.03
+	local column2 = 0.20
+	local column3 = 0.50
+	local column4 = 0.65
+	local column5 = 0.80
+	
+	self.gui.st.window:SetSize(window_size)
+	self.gui.st.window:SetPosition(self.gui.window:GetPosition() + Vector2(0, self.gui.window:GetHeight()))
+	
+	self.gui.st.distance.label:SetPositionRel(Vector2(column1, 0.08))
+	self.gui.st.distance.label:SetTextSize(self.text_size)
+	self.gui.st.distance.label:SizeToContents()
+	for i,v in ipairs(self.gui.st.distance) do
+		v:SetPositionRel(Vector2(column1, 0.2 + (i - 1) * 0.1))
+		v:GetLabel():SetTextSize(self.text_size)
+		v:GetLabel():SizeToContents()
+	end
+	
+	self.gui.st.speed.label:SetPositionRel(Vector2(column2, 0.08))
+	self.gui.st.speed.label:SetTextSize(self.text_size)
+	self.gui.st.speed.label:SizeToContents()
+	for i,v in ipairs(self.gui.st.speed) do
+		v:SetPositionRel(Vector2(column2, 0.2 + (i - 1) * 0.1))
+		v:GetLabel():SetTextSize(self.text_size)
+		v:GetLabel():SizeToContents()
+	end
+	
+	for i,v in ipairs(self.gui.st.ap) do
+		v:SetPositionRel(Vector2(column3, 0.2 + (i - 1) * 0.1 + 0.02))
+		v:SetTextSize(self.text_size)
+		v:SizeToContents()
+	end
+	
+	self.gui.st.ap.gain.label:SetPositionRel(Vector2(column4, 0.08))
+	self.gui.st.ap.gain.label:SetTextSize(self.text_size)
+	self.gui.st.ap.gain.label:SizeToContents()
+	
+	for i,v in ipairs(self.gui.st.ap.gain) do
+		v:SetPositionRel(Vector2(column4, 0.2 + (i - 1) * 0.1))
+		v:SetTextSize(self.text_size)
+		v:SetWidth(self.text_size * 3)
+		v:SetHeight(self.text_size * 1.5)
+	end
+	
+	self.gui.st.ap.input.label:SetPositionRel(Vector2(column5, 0.08))
+	self.gui.st.ap.input.label:SetTextSize(self.text_size)
+	self.gui.st.ap.input.label:SizeToContents()
+	
+	for i,v in pairs(self.gui.st.ap.input) do
+		if type(i) == "number" then
+			v:SetPositionRel(Vector2(column5, 0.2 + (i - 1) * 0.1))
+			v:SetTextSize(self.text_size)
+			v:SetWidth(self.text_size * 3)
+			v:SetHeight(self.text_size * 1.5)
 		end
 	end
 	
@@ -525,10 +566,10 @@ end
 
 function Autopilot:WindowUpdate() -- Subscribed to Window Render
 
-	for k,v in pairs(self.window.setting) do
+	for k,v in pairs(self.gui.ap) do
 		v.button:SetToggleState(config[k].on)
 		if config[k].setting then
-			v.label:SetText(tostringint(config[k].setting)..config[k].units)
+			v.label:SetText(string.format("%i%s", config[k].setting * units[config[k].units][settings[config[k].units]][2], units[config[k].units][settings[config[k].units]][1]))
 			v.slider:SetValue(config[k].setting)		
 		end
 	end
@@ -552,12 +593,7 @@ end
 function Autopilot:ExitPlane(args)
 
 	if self.panel_available then
-		self:APOff()
-		self.panel_available = false
-		self.vehicle = nil
-		self.model = nil
-		self.window:SetVisible(false)
-		Mouse:SetVisible(false)
+		self:Disable()
 	end
 
 end
@@ -566,31 +602,36 @@ function Autopilot:PlaneDespawn(args)
 
 	if args.entity.__type == "Vehicle" then
 		if self.vehicle and self.vehicle == args.entity then
-			self:APOff()
-			self.panel_available = false
-			self.vehicle = nil
-			self.model = nil
-			self.window:SetVisible(false)
-			Mouse:SetVisible(false)
+			self:Disable()
 		end
 	end
 
 end
 
+function Autopilot:Disable()
+	self:APOff()
+	self.panel_available = false
+	self.vehicle = nil
+	self.model = nil
+	self.gui.window:SetVisible(false)
+	self.gui.st.window:SetVisible(false)
+	Mouse:SetVisible(false)
+end
+
 function Autopilot:RollHold() -- Subscribed to InputPoll
 
-	if Game:GetState() ~= GUIState.Game or not self.panel_available or not config.rh.on or not IsValid(self.vehicle) then return end	
+	if Game:GetState() ~= GUIState.Game or not self.panel_available or not config[2].on or not IsValid(self.vehicle) then return end	
 	
 	local roll = self.vehicle:GetRoll()
 	
-	local input = math.abs(roll - config.rh.setting) * config.rh.gain
-	if input > config.rh.max_input then input = config.rh.max_input end
+	local input = math.abs(roll - config[2].setting) * config[2].gain
+	if input > config[2].input then input = config[2].input end
 	
-	if config.rh.setting < roll then
+	if config[2].setting < roll then
 		Input:SetValue(Action.PlaneTurnRight, input)
 	end
 	
-	if config.rh.setting > roll then
+	if config[2].setting > roll then
 		Input:SetValue(Action.PlaneTurnLeft, input)
 	end
 	
@@ -598,32 +639,32 @@ end
 
 function Autopilot:PitchHold() -- Subscribed to InputPoll
 
-	if Game:GetState() ~= GUIState.Game or not self.panel_available or not config.ph.on or not IsValid(self.vehicle) then return end
+	if Game:GetState() ~= GUIState.Game or not self.panel_available or not config[3].on or not IsValid(self.vehicle) then return end
 	
 	local pitch = self.vehicle:GetPitch()
 	local roll = self.vehicle:GetRoll()
 	
-	local input = math.abs(pitch - config.ph.setting) * config.ph.gain
-	if input > config.ph.max_input then input = config.ph.max_input end
+	local input = math.abs(pitch - config[3].setting) * config[3].gain
+	if input > config[3].input then input = config[3].input end
 	
 	-- Deactivates if the plane is banked too far left or right.
 	
 	if math.abs(roll) < 60 then
-		if config.ph.setting > pitch then
+		if config[3].setting > pitch then
 			Input:SetValue(Action.PlanePitchUp, input)
 		end
 		
-		if config.ph.setting < pitch then
+		if config[3].setting < pitch then
 			Input:SetValue(Action.PlanePitchDown, input)
 		end
 	end
 	
 	if math.abs(roll) > 120 then
-		if config.ph.setting > pitch then
+		if config[3].setting > pitch then
 			Input:SetValue(Action.PlanePitchDown, input)
 		end
 		
-		if config.ph.setting < pitch then
+		if config[3].setting < pitch then
 			Input:SetValue(Action.PlanePitchUp, input)
 		end
 	end
@@ -632,49 +673,49 @@ end
 
 function Autopilot:HeadingHold() -- Subscribed to InputPoll
 
-	if Game:GetState() ~= GUIState.Game or not self.panel_available or not config.hh.on or not IsValid(self.vehicle) then return end
+	if Game:GetState() ~= GUIState.Game or not self.panel_available or not config[4].on or not IsValid(self.vehicle) then return end
 	
 	local heading = self.vehicle:GetHeading()
 	
-	local diff = DegreesDifference(config.hh.setting, heading)
+	local diff = DegreesDifference(config[4].setting, heading)
 	
-	config.rh.setting = diff * config.hh.gain
+	config[2].setting = diff * config[4].gain
 	
-	if config.rh.setting > config.hh.roll_limit then
-		config.rh.setting = config.hh.roll_limit
-	elseif config.rh.setting < -config.hh.roll_limit then
-		config.rh.setting = -config.hh.roll_limit
+	if config[2].setting > config[4].roll_limit then
+		config[2].setting = config[4].roll_limit
+	elseif config[2].setting < -config[4].roll_limit then
+		config[2].setting = -config[4].roll_limit
 	end
 	
 end
 
 function Autopilot:AltitudeHold() -- Subscribed to InputPoll
 
-	if Game:GetState() ~= GUIState.Game or not self.panel_available or not config.ah.on or not IsValid(self.vehicle) then return end
+	if Game:GetState() ~= GUIState.Game or not self.panel_available or not config[5].on or not IsValid(self.vehicle) then return end
 	
-	config.ph.setting = (config.ah.setting - self.vehicle:GetAltitude() + config.ah.bias) * config.ah.gain
+	config[3].setting = (config[5].setting - self.vehicle:GetAltitude() + config[5].bias) * config[5].gain
 	
-	if config.ph.setting > config.ah.pitch_limit then
-		config.ph.setting = config.ah.pitch_limit
-	elseif config.ph.setting < -config.ah.pitch_limit then
-		config.ph.setting = -config.ah.pitch_limit
+	if config[3].setting > config[5].pitch_limit then
+		config[3].setting = config[5].pitch_limit
+	elseif config[3].setting < -config[5].pitch_limit then
+		config[3].setting = -config[5].pitch_limit
 	end
 	
 end
 
 function Autopilot:SpeedHold() -- Subscribed to InputPoll
 
-	if Game:GetState() ~= GUIState.Game or not self.panel_available or not config.sh.on or not IsValid(self.vehicle) then return end
+	if Game:GetState() ~= GUIState.Game or not self.panel_available or not config[6].on or not IsValid(self.vehicle) then return end
 		
 	local air_speed = self.vehicle:GetAirSpeed()
 	
-	local input = math.abs(air_speed - config.sh.setting) * config.sh.gain
-	if input > config.sh.max_input then input = config.sh.max_input end
+	local input = math.abs(air_speed - config[6].setting) * config[6].gain
+	if input > config[6].input then input = config[6].input end
 	
-	if air_speed < config.sh.setting and not config.oh.on then
+	if air_speed < config[6].setting and not config[8].on then
 		Input:SetValue(Action.PlaneIncTrust, input)
 	end
-	if air_speed > config.sh.setting then
+	if air_speed > config[6].setting then
 		Input:SetValue(Action.PlaneDecTrust, input)
 	end
 	
@@ -682,7 +723,7 @@ end
 
 function Autopilot:WaypointHold() -- Subscribed to InputPoll
 
-	if Game:GetState() ~= GUIState.Game or not self.panel_available or not config.wh.on or not IsValid(self.vehicle) then return end
+	if Game:GetState() ~= GUIState.Game or not self.panel_available or not config[7].on or not IsValid(self.vehicle) then return end
 	
 	local waypoint, marker = Waypoint:GetPosition()
 	
@@ -697,7 +738,7 @@ end
 
 function Autopilot:ApproachHold() -- Subscribed to Render
 
-	if Game:GetState() ~= GUIState.Game or not self.panel_available or not config.oh.on or not IsValid(self.vehicle) then return end
+	if Game:GetState() ~= GUIState.Game or not self.panel_available or not config[8].on or not IsValid(self.vehicle) then return end
 	
 	if not self.approach and self.approach_timer:GetMilliseconds() > 1000 then
 	
@@ -794,8 +835,8 @@ function Autopilot:ApproachHold() -- Subscribed to Render
 			local distance = Vector3.Distance(self.approach.near_marker, position)
 			if distance > planes[self.model].flare_distance then
 				self.approach.farpoint = self.approach.near_marker + self.approach.angle * Vector3.Forward * distance
-				config.ah.setting = self.approach.farpoint.y - 200 - config.ah.bias
-				config.sh.setting = math.min(math.lerp(planes[self.model].landing_speed, planes[self.model].cruise_speed, distance / planes[self.model].slow_distance), planes[self.model].cruise_speed)
+				config[5].setting = self.approach.farpoint.y - 200 - config[5].bias
+				config[6].setting = math.min(math.lerp(planes[self.model].landing_speed, planes[self.model].cruise_speed, distance / planes[self.model].slow_distance), planes[self.model].cruise_speed)
 				self.approach.target = math.lerp(self.approach.near_marker, self.approach.farpoint, 0.5)
 				self:FollowTargetXZ(self.approach.target)
 			else
@@ -803,13 +844,13 @@ function Autopilot:ApproachHold() -- Subscribed to Render
 				self:AHOff()
 				self:PHOn()
 				self.approach.target = self.approach.far_marker
-				config.ph.setting = planes[self.model].flare_pitch
-				config.sh.setting = planes[self.model].landing_speed
+				config[3].setting = planes[self.model].flare_pitch
+				config[6].setting = planes[self.model].landing_speed
 			end
 		else
 			local distance = Vector3.Distance(self.approach.far_marker, position)
 			local length = Vector3.Distance(self.approach.far_marker, self.approach.near_marker)
-			config.sh.setting = math.min(math.lerp(0, planes[self.model].landing_speed, distance / length), planes[self.model].landing_speed)
+			config[6].setting = math.min(math.lerp(0, planes[self.model].landing_speed, distance / length), planes[self.model].landing_speed)
 			self:FollowTargetXZ(self.approach.target)
 		end
 
@@ -827,7 +868,7 @@ end
 
 function Autopilot:TargetHold() -- Subscribed to Render
 
-	if Game:GetState() ~= GUIState.Game or not self.panel_available or not config.th.on or not IsValid(self.vehicle) then return end
+	if Game:GetState() ~= GUIState.Game or not self.panel_available or not config[9].on or not IsValid(self.vehicle) then return end
 	
 	if not self.target and self.target_timer:GetMilliseconds() > 1000 then
 	
@@ -838,7 +879,7 @@ function Autopilot:TargetHold() -- Subscribed to Render
 		
 		for vehicle in Client:GetVehicles() do
 		
-			if vehicle:GetDriver() and vehicle ~= local_vehicle then
+			if --[[vehicle:GetDriver() and]] vehicle ~= local_vehicle then
 		
 				local model = vehicle:GetModelId()
 				if planes[model] then
@@ -897,7 +938,7 @@ function Autopilot:TargetHold() -- Subscribed to Render
 	
 	if self.target then
 	
-		if not IsValid(self.target.vehicle) or not self.target.vehicle:GetDriver() then
+		if not IsValid(self.target.vehicle) --[[or not self.target.vehicle:GetDriver()]] then
 			Chat:Print("Target lost.", self.color[1])
 			self:THOff()
 			return
@@ -908,7 +949,7 @@ function Autopilot:TargetHold() -- Subscribed to Render
 		local distance = Vector3.Distance(target_position, position)
 		local bias = distance / self.target.follow_distance
 		
-		config.sh.setting = math.clamp(bias * self.target.vehicle:GetLinearVelocity():Length() * 3.6, config.sh.min_setting, config.sh.max_setting)
+		config[6].setting = math.clamp(bias * self.target.vehicle:GetLinearVelocity():Length() * 3.6, config[6].min_setting, config[6].max_setting)
 		
 		self:FollowTargetXZ(target_position)
 		self:FollowTargetY(target_position)
@@ -927,7 +968,8 @@ function Autopilot:TargetHold() -- Subscribed to Render
 			Render:DrawLine(center + Vector2( n,  m), center + Vector2( n, -m), self.color[1])
 			Render:DrawLine(center + Vector2( m, -n), center + Vector2(-m, -n), self.color[1])
 			
-			Render:DrawText(center + Vector2(n * 1.25, -0.3 * Render:GetTextHeight(tostring(distance), 1.2 * self.text_size)), tostringint(distance).." m", self.color[1], 1.2 * self.text_size)
+			local distance_string = string.format("%i%s", distance * units.distance[settings.distance][2], units.distance[settings.distance][1])
+			Render:DrawText(center + Vector2(n * 1.25, -0.3 * Render:GetTextHeight(distance_string, 1.2 * self.text_size)), distance_string, self.color[1], 1.2 * self.text_size)
 			
 		end
 		
@@ -941,7 +983,7 @@ function Autopilot:FollowTargetXZ(target_position) -- Heading-hold must be on
 	local dx = position.x - target_position.x
 	local dz = position.z - target_position.z
 	
-	config.hh.setting = YawToHeading(math.deg(math.atan2(dx, dz)))
+	config[4].setting = YawToHeading(math.deg(math.atan2(dx, dz)))
 
 end
 
@@ -951,7 +993,7 @@ function Autopilot:FollowTargetY(target_position) -- Pitch-hold must be on
 	local dy = position.y - target_position.y
 	local distance = Vector3.Distance(position, target_position)
 	
-	config.ph.setting = math.deg(math.asin(-dy / distance))
+	config[3].setting = math.deg(math.asin(-dy / distance))
 
 end
 
