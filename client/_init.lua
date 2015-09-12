@@ -1,107 +1,69 @@
-function tostringint(n)
-	return tostring(math.floor(n + 0.5))
-end
+settings = { -- Set default display units here
+	["distance"] = 1,
+	["speed"] = 2,
+	["angle"] = 1
+}
 
-function DegreesDifference(theta1, theta2)
-	return (theta2 - theta1 + 180) % 360 - 180
-end
-
-function OppositeDegrees(theta)
-	return (theta + 180) % 360
-end
-
-function YawToHeading(yaw)
-	if yaw < 0 then
-		return -yaw
-	else
-		return 360 - yaw
-	end
-end
-
-function HeadingToYaw(heading)
-	if heading < 180 then
-		return -heading
-	else
-		return 360 - heading
-	end
-end
-
-function Vehicle:GetRoll()
-	return math.deg(self:GetAngle().roll)
-end
-
-function Vehicle:GetPitch()
-	return math.deg(self:GetAngle().pitch)
-end
-
-function Vehicle:GetYaw()
-	return math.deg(self:GetAngle().yaw)
-end
-
-function Vehicle:GetHeading()
-	local yaw = self:GetYaw()
-	return YawToHeading(yaw)
-end
-
-function Vehicle:GetAltitude()
-	return self:GetPosition().y - 200
-end
-
-function Vehicle:GetAirSpeed()
-	return self:GetLinearVelocity():Length() * 3.6
-end
-
-function Vehicle:GetVerticalSpeed()
-	return self:GetLinearVelocity().y * 3.6
-end
-
-function Vehicle:GetGroundSpeed()
-	return Vector2(self:GetLinearVelocity().x, self:GetLinearVelocity().z):Length() * 3.6
-end
+units = {
+	["distance"] = { -- Do not change these
+		{" m", 1}, -- 1
+		{" ft", 3.281} -- 2
+	},
+	["speed"] = { -- Do not change these
+		{" m/s", 0.278}, -- 1
+		{" km/h", 1}, -- 2
+		{" mi/h", 0.621}, -- 3
+		{" ft/s", 0.911}, -- 4
+		{" kts", 0.540} -- 5
+	},
+	["angle"] = { -- Do not change these
+		{"°", 1}, -- 1
+	}
+}
 
 config = { 
-	["ap"] = {
+	[1] = {
 		["name"] = "Autopilot",
 		["on"] = false
 	},
-	["rh"] = {
+	[2] = {
 		["name"] = "Roll",
 		["on"] = false,
 		["setting"] = 0,
-		["units"] = "°",
+		["units"] = "angle",
 		["min_setting"] = -60, -- Do not set less than -180
 		["max_setting"] = 60, -- Do not set greater than 180
 		["gain"] = 0.20, -- 0.20 default
-		["max_input"] = 0.7, -- Percentage from 0 to 1
+		["input"] = 0.7, -- Percentage from 0 to 1
 		["quick"] = "Zero"
 	},
-	["ph"] = {			
+	[3] = {			
 		["name"] = "Pitch",
 		["on"] = false,
 		["setting"] = 0,
-		["units"] = "°",
+		["units"] = "angle",
 		["min_setting"] = -60, -- Do not set less than -90
 		["max_setting"] = 60, -- Do not set greater than 90
 		["gain"] = 0.50, -- 0.50 default
-		["max_input"] = 0.8, -- Percentage from 0 to 1
+		["input"] = 0.8, -- Percentage from 0 to 1
 		["quick"] = "Zero"
 	},
-	["hh"] = {			
+	[4] = {			
 		["name"] = "Heading",
 		["on"] = false,
 		["setting"] = 0,
-		["units"] = "°",
+		["units"] = "angle",
 		["min_setting"] = 0, -- Do not change
 		["max_setting"] = 360, -- Do not change
 		["gain"] = 2.00, -- 2.00 default
 		["roll_limit"] = 45, -- Maximum roll angle while HH is active, 30 to 60 recommended
 		["quick"] = "Lock"
 	},
-	["ah"] = {
+	[5] = {
 		["name"] = "Altitude",
 		["on"] = false,
 		["setting"] = 0,
-		["units"] = " m",
+		["units"] = "distance",
 		["min_setting"] = 0, -- Do not set less than 0
 		["max_setting"] = 5000, -- Planes do not maneuver properly above 5000 m
 		["gain"] = 0.30, -- 0.30 default
@@ -110,28 +72,32 @@ config = {
 		["step"] = 50, -- Step size for changing setting
 		["quick"] = "Lock"
 	},
-	["sh"] = {
+	[6] = {
 		["name"] = "Speed",
 		["on"] = false,
 		["setting"] = 0,
-		["units"] = " km/h",
+		["units"] = "speed",
 		["min_setting"] = 0, -- Do not set less than 0
-		["max_setting"] = 500, -- Planes rarely exceed 500 km/h without server functions
+		["max_setting"] = 500, -- Planes rarely exceed 500 km/h
 		["gain"] = 0.04, -- 0.04 default
-		["max_input"] = 1, -- Percentage from 0 to 1, needs to be exactly 1 for take-off
+		["input"] = 1, -- Percentage from 0 to 1, needs to be exactly 1 for take-off
 		["step"] = 5, -- Step size for changing setting
 		["quick"] = "Cruise"
 	},
-	["wh"] = {
+	[7] = {
 		["name"] = "Waypoint",
 		["on"] = false
 	},
-	["oh"] = {
+	[8] = {
 		["name"] = "Approach",
 		["on"] = false
 	},
-	["th"] = {
+	[9] = {
 		["name"] = "Target",
+		["on"] = false
+	},
+	[10] = {
+		["name"] = "Settings",
 		["on"] = false
 	}
 }
@@ -471,3 +437,59 @@ airports = {
 		}
 	}
 }
+
+function DegreesDifference(theta1, theta2)
+	return (theta2 - theta1 + 180) % 360 - 180
+end
+
+function OppositeDegrees(theta)
+	return (theta + 180) % 360
+end
+
+function YawToHeading(yaw)
+	if yaw < 0 then
+		return -yaw
+	else
+		return 360 - yaw
+	end
+end
+
+function HeadingToYaw(heading)
+	if heading < 180 then
+		return -heading
+	else
+		return 360 - heading
+	end
+end
+
+function Vehicle:GetRoll()
+	return math.deg(self:GetAngle().roll)
+end
+
+function Vehicle:GetPitch()
+	return math.deg(self:GetAngle().pitch)
+end
+
+function Vehicle:GetYaw()
+	return math.deg(self:GetAngle().yaw)
+end
+
+function Vehicle:GetHeading()
+	return YawToHeading(self:GetYaw())
+end
+
+function Vehicle:GetAltitude()
+	return (self:GetPosition().y - 200)
+end
+
+function Vehicle:GetAirSpeed()
+	return self:GetLinearVelocity():Length() * 3.6
+end
+
+function Vehicle:GetVerticalSpeed()
+	return self:GetLinearVelocity().y * 3.6
+end
+
+function Vehicle:GetGroundSpeed()
+	return Vector2(self:GetLinearVelocity().x, self:GetLinearVelocity().z):Length() * 3.6
+end
