@@ -62,7 +62,7 @@ function Autopilot:InitGUI()
 	self.gui.slider_size = Vector2(0.31, self.gui.button_size.y)
 	
 	self.gui.window:SetTitle("Autopilot Panel")
-	self.gui.window:SetVisible(true)
+	self.gui.window:SetVisible(false)
 	self.gui.window:SetClosable(false)
 	
 	self.gui.window:SetSizeRel(self.gui.size)
@@ -78,7 +78,7 @@ function Autopilot:InitGUI()
 	self.gui.st.window:SetPosition(self.gui.window:GetPosition() + Vector2(0, self.gui.window:GetHeight()))
 	
 	self.gui.st.window:SetTitle("")
-	self.gui.st.window:SetVisible(true)
+	self.gui.st.window:SetVisible(false)
 	self.gui.st.window:SetClosable(false)
 	
 	for k in pairs(units) do
