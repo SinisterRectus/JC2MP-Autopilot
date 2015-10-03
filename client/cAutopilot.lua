@@ -13,14 +13,12 @@ function Autopilot:__init()
 	self.panel_toggle_button = "Z"
 	self.mouse_toggle_button = "M"
 	
-	if LocalPlayer:InVehicle() then
-		local vehicle = LocalPlayer:GetVehicle()
-		if vehicle:GetDriver() == LocalPlayer then
-			local model = vehicle:GetModelId()
-			if planes[model] and planes[model].available then
-				self.vehicle = vehicle
-				self.model = model
-			end
+	local vehicle = LocalPlayer:GetVehicle()
+	if IsValid(vehicle) and vehicle:GetDriver() == LocalPlayer then
+		local model = vehicle:GetModelId()
+		if planes[model] and planes[model].available then
+			self.vehicle = vehicle
+			self.model = model
 		end
 	end
 	
@@ -42,7 +40,7 @@ function Autopilot:__init()
 	Events:Subscribe("InputPoll", self, self.AltitudeHold)
 	Events:Subscribe("InputPoll", self, self.SpeedHold)
 	Events:Subscribe("InputPoll", self, self.WaypointHold)
-	Events:Subscribe("Render", self, self.ApproachHold)
+	Events:Subscribe("GameRender", self, self.ApproachHold)
 	Events:Subscribe("Render", self, self.TargetHold)
 	
 end
@@ -681,10 +679,10 @@ function Autopilot:HeadingHold() -- Subscribed to InputPoll
 	
 	config[2].setting = diff * config[4].gain
 	
-	if config[2].setting > config[4].roll_limit then
-		config[2].setting = config[4].roll_limit
-	elseif config[2].setting < -config[4].roll_limit then
-		config[2].setting = -config[4].roll_limit
+	if config[2].setting > config[4].input then
+		config[2].setting = config[4].input
+	elseif config[2].setting < -config[4].input then
+		config[2].setting = -config[4].input
 	end
 	
 end
@@ -695,10 +693,10 @@ function Autopilot:AltitudeHold() -- Subscribed to InputPoll
 	
 	config[3].setting = (config[5].setting - self.vehicle:GetAltitude() + config[5].bias) * config[5].gain
 	
-	if config[3].setting > config[5].pitch_limit then
-		config[3].setting = config[5].pitch_limit
-	elseif config[3].setting < -config[5].pitch_limit then
-		config[3].setting = -config[5].pitch_limit
+	if config[3].setting > config[5].input then
+		config[3].setting = config[5].input
+	elseif config[3].setting < -config[5].input then
+		config[3].setting = -config[5].input
 	end
 	
 end
@@ -736,7 +734,7 @@ function Autopilot:WaypointHold() -- Subscribed to InputPoll
 	
 end
 
-function Autopilot:ApproachHold() -- Subscribed to Render
+function Autopilot:ApproachHold() -- Subscribed to GameRender
 
 	if Game:GetState() ~= GUIState.Game or not self.panel_available or not config[8].on or not IsValid(self.vehicle) then return end
 	
@@ -754,50 +752,19 @@ function Autopilot:ApproachHold() -- Subscribed to Render
 			
 				local near_marker = airports[airport][runway].near_marker
 				local far_marker = airports[airport][runway].far_marker
-				local distance = Vector3.Distance(position, near_marker)
+				local distance = Vector3.DistanceSqr(position, near_marker)
 					
-				if distance < airports[airport][runway].glide_length and distance < nearest_marker_distance then
-				
-					local dy = near_marker.y - position.y
+				if distance < airports[airport][runway].glide_length^2 and distance < nearest_marker_distance then
 					
-					local runway_cone_angle = airports[airport][runway].cone_angle
-					local pitch_to_plane = math.deg(math.asin(-dy / distance))
-					local pitch_from_runway = airports[airport][runway].glide_pitch
-					local pitch_difference1 = DegreesDifference(pitch_to_plane, pitch_from_runway)
-					
-					if math.abs(pitch_difference1) < 0.5 * runway_cone_angle then
-					
-						local dx = near_marker.x - position.x
-						local dz = near_marker.z - position.z
-
-						local heading_to_plane = YawToHeading(math.deg(math.atan2(dx, dz)))
-						local heading_from_runway = YawToHeading(math.deg(math.atan2(far_marker.x - near_marker.x, far_marker.z - near_marker.z)))
-						local heading_difference1 = DegreesDifference(heading_to_plane, heading_from_runway)
-									
-						if math.abs(heading_difference1) < 0.5 * runway_cone_angle then
+					if math.deg(math.acos(Vector3.Dot(self.vehicle:GetAngle() * Vector3.Forward, (near_marker - position):Normalized()))) < 0.5 * planes[self.model].cone_angle then
 						
-							local plane_cone_angle = planes[self.model].cone_angle
-							local pitch_to_runway = math.deg(math.asin(dy / distance))
-							local pitch_from_plane = self.vehicle:GetPitch()
-							local pitch_difference2 = DegreesDifference(pitch_to_runway, pitch_from_plane)
-							
-							if math.abs(pitch_difference2) < 0.5 * plane_cone_angle then
-						
-								local heading_to_runway = YawToHeading(math.deg(math.atan2(-dx, -dz)))
-								local heading_from_plane = self.vehicle:GetHeading()
-								local heading_difference2 = DegreesDifference(heading_from_plane, heading_to_runway)
-						
-								if math.abs(heading_difference2) < 0.5 * plane_cone_angle then
-
-									nearest_marker_distance = distance
-									nearest_marker = near_marker
-									airport_name = airport
-									runway_name = runway
-									runway_direction = heading_from_runway
-									
-								end
-								
-							end
+						if math.deg(math.acos(Vector3.Dot(Angle(math.atan2(far_marker.x - near_marker.x, far_marker.z - near_marker.z), math.rad(airports[airport][runway].glide_pitch), 0) * Vector3.Forward, (position - near_marker):Normalized()))) < 0.5 * airports[airport][runway].cone_angle then
+					
+							nearest_marker_distance = distance
+							nearest_marker = near_marker
+							airport_name = airport
+							runway_name = runway
+							runway_direction = YawToHeading(math.deg(math.atan2(far_marker.x - near_marker.x, far_marker.z - near_marker.z)))
 							
 						end
 						
@@ -872,49 +839,26 @@ function Autopilot:TargetHold() -- Subscribed to Render
 	
 	if not self.target and self.target_timer:GetMilliseconds() > 1000 then
 	
-		local local_vehicle = LocalPlayer:GetVehicle()
-		local local_position = LocalPlayer:GetPosition()
+		local position = self.vehicle:GetPosition()
 		local nearest_target = nil
 		local nearest_target_distance = math.huge
 		
-		for vehicle in Client:GetVehicles() do
+		for target in Client:GetVehicles() do
 		
-			if --[[vehicle:GetDriver() and]] vehicle ~= local_vehicle then
-		
-				local model = vehicle:GetModelId()
-				if planes[model] then
+			if IsValid(target) and target:GetClass() == VehicleClass.Air and target ~= self.vehicle and target:GetDriver() then
 				
-					local vehicle_position = vehicle:GetPosition()
-					local vehicle_distance = Vector3.Distance(local_position, vehicle_position)
+				local target_position = target:GetPosition()
+				local target_distance = Vector3.DistanceSqr(position, target_position)
+				
+				if target_distance < nearest_target_distance then
 					
-					if vehicle_distance < nearest_target_distance then
+					if math.deg(math.acos(Vector3.Dot(self.vehicle:GetAngle() * Vector3.Forward, (target_position - position):Normalized()))) < 0.5 * planes[self.model].cone_angle then
+					
+						nearest_target = target
+						nearest_target_distance = target_distance
 
-						local dy = vehicle_position.y - local_position.y
-					
-						local plane_cone_angle = planes[self.model].cone_angle
-						local pitch_to_target = math.deg(math.asin(dy / vehicle_distance))
-						local pitch_from_plane = self.vehicle:GetPitch()
-						local pitch_difference = DegreesDifference(pitch_to_target, pitch_from_plane)
-						
-						if math.abs(pitch_difference) < 0.5 * plane_cone_angle then
-						
-							local dx = vehicle_position.x - local_position.x
-							local dz = vehicle_position.z - local_position.z
-					
-							local heading_to_target = YawToHeading(math.deg(math.atan2(-dx, -dz)))
-							local heading_from_plane = self.vehicle:GetHeading()
-							local heading_difference = DegreesDifference(heading_from_plane, heading_to_target)
-					
-							if math.abs(heading_difference) < 0.5 * plane_cone_angle then
-
-								nearest_target = vehicle
-								nearest_target_distance = vehicle_distance
-								
-							end
-
-						end
 					end
-					
+
 				end
 				
 			end
@@ -938,7 +882,7 @@ function Autopilot:TargetHold() -- Subscribed to Render
 	
 	if self.target then
 	
-		if not IsValid(self.target.vehicle) --[[or not self.target.vehicle:GetDriver()]] then
+		if not IsValid(self.target.vehicle) or not self.target.vehicle:GetDriver() then
 			Chat:Print("Target lost.", self.color[1])
 			self:THOff()
 			return
