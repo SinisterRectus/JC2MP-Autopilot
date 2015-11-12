@@ -56,7 +56,7 @@ config = {
 		["min_setting"] = 0, -- Do not change
 		["max_setting"] = 360, -- Do not change
 		["gain"] = 2.00, -- 2.00 default
-		["roll_limit"] = 45, -- Maximum roll angle while HH is active, 30 to 60 recommended
+		["input"] = 45, -- Maximum roll angle while HH is active, 30 to 60 recommended
 		["quick"] = "Lock"
 	},
 	[5] = {
@@ -67,7 +67,7 @@ config = {
 		["min_setting"] = 0, -- Do not set less than 0
 		["max_setting"] = 5000, -- Planes do not maneuver properly above 5000 m
 		["gain"] = 0.30, -- 0.30 default
-		["pitch_limit"] = 45, -- Maximum pitch angle while AH is active, 30 to 60 recommended
+		["input"] = 45, -- Maximum pitch angle while AH is active, 30 to 60 recommended
 		["bias"] = 5, -- Correction for gravity
 		["step"] = 50, -- Step size for changing setting
 		["quick"] = "Lock"
