@@ -34,14 +34,9 @@ function Autopilot:__init()
 	Events:Subscribe("LocalPlayerExitVehicle", self, self.ExitPlane)
 	Events:Subscribe("EntityDespawn", self, self.PlaneDespawn)
 	
-	Events:Subscribe("InputPoll", self, self.RollHold)
-	Events:Subscribe("InputPoll", self, self.PitchHold)
-	Events:Subscribe("InputPoll", self, self.HeadingHold)
-	Events:Subscribe("InputPoll", self, self.AltitudeHold)
-	Events:Subscribe("InputPoll", self, self.SpeedHold)
-	Events:Subscribe("InputPoll", self, self.WaypointHold)
-	Events:Subscribe("GameRender", self, self.ApproachHold)
-	Events:Subscribe("Render", self, self.TargetHold)
+	Events:Subscribe("InputPoll", self, self.Input)
+	Events:Subscribe("GameRender", self, self.DrawApproach)
+	Events:Subscribe("Render", self, self.DrawTarget)
 	
 end
 
@@ -616,9 +611,22 @@ function Autopilot:Disable()
 	Mouse:SetVisible(false)
 end
 
-function Autopilot:RollHold() -- Subscribed to InputPoll
+function Autopilot:Input() -- Subsciribed to InputPoll
 
-	if Game:GetState() ~= GUIState.Game or not self.panel_available or not config[2].on or not IsValid(self.vehicle) then return end	
+	if not self.panel_available or not IsValid(self.vehicle) or Game:GetState() ~= GUIState.Game then return end	
+
+	if config[2].on then self:RollHold() end
+	if config[3].on then self:PitchHold() end
+	if config[4].on then self:HeadingHold() end
+	if config[5].on then self:AltitudeHold() end
+	if config[6].on then self:SpeedHold() end
+	if config[7].on then self:WayPointHold() end
+	if config[8].on then self:ApproachHold() end
+	if config[9].on then self:Targethold() end
+
+end
+
+function Autopilot:RollHold()
 	
 	local roll = self.vehicle:GetRoll()
 	
@@ -627,17 +635,13 @@ function Autopilot:RollHold() -- Subscribed to InputPoll
 	
 	if config[2].setting < roll then
 		Input:SetValue(Action.PlaneTurnRight, input)
-	end
-	
-	if config[2].setting > roll then
+	elseif config[2].setting > roll then
 		Input:SetValue(Action.PlaneTurnLeft, input)
 	end
 	
 end
 
-function Autopilot:PitchHold() -- Subscribed to InputPoll
-
-	if Game:GetState() ~= GUIState.Game or not self.panel_available or not config[3].on or not IsValid(self.vehicle) then return end
+function Autopilot:PitchHold()
 	
 	local pitch = self.vehicle:GetPitch()
 	local roll = self.vehicle:GetRoll()
@@ -650,28 +654,20 @@ function Autopilot:PitchHold() -- Subscribed to InputPoll
 	if math.abs(roll) < 60 then
 		if config[3].setting > pitch then
 			Input:SetValue(Action.PlanePitchUp, input)
-		end
-		
-		if config[3].setting < pitch then
+		elseif config[3].setting < pitch then
 			Input:SetValue(Action.PlanePitchDown, input)
 		end
-	end
-	
-	if math.abs(roll) > 120 then
+	elseif math.abs(roll) > 120 then
 		if config[3].setting > pitch then
 			Input:SetValue(Action.PlanePitchDown, input)
-		end
-		
-		if config[3].setting < pitch then
+		elseif config[3].setting < pitch then
 			Input:SetValue(Action.PlanePitchUp, input)
 		end
 	end
 	
 end
 
-function Autopilot:HeadingHold() -- Subscribed to InputPoll
-
-	if Game:GetState() ~= GUIState.Game or not self.panel_available or not config[4].on or not IsValid(self.vehicle) then return end
+function Autopilot:HeadingHold()
 	
 	local heading = self.vehicle:GetHeading()
 	
@@ -687,9 +683,7 @@ function Autopilot:HeadingHold() -- Subscribed to InputPoll
 	
 end
 
-function Autopilot:AltitudeHold() -- Subscribed to InputPoll
-
-	if Game:GetState() ~= GUIState.Game or not self.panel_available or not config[5].on or not IsValid(self.vehicle) then return end
+function Autopilot:AltitudeHold()
 	
 	config[3].setting = (config[5].setting - self.vehicle:GetAltitude() + config[5].bias) * config[5].gain
 	
@@ -701,9 +695,7 @@ function Autopilot:AltitudeHold() -- Subscribed to InputPoll
 	
 end
 
-function Autopilot:SpeedHold() -- Subscribed to InputPoll
-
-	if Game:GetState() ~= GUIState.Game or not self.panel_available or not config[6].on or not IsValid(self.vehicle) then return end
+function Autopilot:SpeedHold()
 		
 	local air_speed = self.vehicle:GetAirSpeed()
 	
@@ -712,31 +704,23 @@ function Autopilot:SpeedHold() -- Subscribed to InputPoll
 	
 	if air_speed < config[6].setting and not config[8].on then
 		Input:SetValue(Action.PlaneIncTrust, input)
-	end
-	if air_speed > config[6].setting then
+	elseif air_speed > config[6].setting then
 		Input:SetValue(Action.PlaneDecTrust, input)
 	end
 	
 end
 
-function Autopilot:WaypointHold() -- Subscribed to InputPoll
-
-	if Game:GetState() ~= GUIState.Game or not self.panel_available or not config[7].on or not IsValid(self.vehicle) then return end
+function Autopilot:WaypointHold()
 	
 	local waypoint, marker = Waypoint:GetPosition()
 	
-	if not marker then
-		self:WHOff()
-		return
-	end
+	if not marker then return self:WHOff() end
 	
 	self:FollowTargetXZ(waypoint)
 	
 end
 
-function Autopilot:ApproachHold() -- Subscribed to GameRender
-
-	if Game:GetState() ~= GUIState.Game or not self.panel_available or not config[8].on or not IsValid(self.vehicle) then return end
+function Autopilot:ApproachHold()
 	
 	if not self.approach and self.approach_timer:GetMilliseconds() > 1000 then
 	
@@ -820,22 +804,24 @@ function Autopilot:ApproachHold() -- Subscribed to GameRender
 			config[6].setting = math.min(math.lerp(0, planes[self.model].landing_speed, distance / length), planes[self.model].landing_speed)
 			self:FollowTargetXZ(self.approach.target)
 		end
-
-		if self.draw_approach then
-		
-			Render:DrawLine(self.approach.near_marker, self.approach.near_marker + self.approach.angle * Vector3.Forward * self.approach.glide_length, self.color[1])
-			Render:DrawLine(self.approach.near_marker, self.approach.near_marker + self.approach.angle * self.approach.sweep_yaw * Vector3.Forward * self.approach.glide_length, Color.Cyan)
-			Render:DrawLine(self.approach.near_marker, self.approach.near_marker + self.approach.angle * -self.approach.sweep_yaw * Vector3.Forward * self.approach.glide_length, Color.Cyan)
-			
-		end
 		
 	end
 	
 end
 
-function Autopilot:TargetHold() -- Subscribed to Render
+function Autopilot:DrawApproach() -- Subscribed to GameRender
 
-	if Game:GetState() ~= GUIState.Game or not self.panel_available or not config[9].on or not IsValid(self.vehicle) then return end
+	if config[8].on and self.draw_approach then
+	
+		Render:DrawLine(self.approach.near_marker, self.approach.near_marker + self.approach.angle * Vector3.Forward * self.approach.glide_length, self.color[1])
+		Render:DrawLine(self.approach.near_marker, self.approach.near_marker + self.approach.angle * self.approach.sweep_yaw * Vector3.Forward * self.approach.glide_length, Color.Cyan)
+		Render:DrawLine(self.approach.near_marker, self.approach.near_marker + self.approach.angle * -self.approach.sweep_yaw * Vector3.Forward * self.approach.glide_length, Color.Cyan)
+	
+	end
+
+end
+
+function Autopilot:TargetHold()
 	
 	if not self.target and self.target_timer:GetMilliseconds() > 1000 then
 	
@@ -884,8 +870,7 @@ function Autopilot:TargetHold() -- Subscribed to Render
 	
 		if not IsValid(self.target.vehicle) or not self.target.vehicle:GetDriver() then
 			Chat:Print("Target lost.", self.color[1])
-			self:THOff()
-			return
+			return self:THOff()
 		end
 		
 		local target_position = self.target.vehicle:GetPosition()
@@ -898,25 +883,29 @@ function Autopilot:TargetHold() -- Subscribed to Render
 		self:FollowTargetXZ(target_position)
 		self:FollowTargetY(target_position)
 		
-		if self.draw_target then
+	end
+
+end
+
+function Autopilot:DrawTarget() -- Subscribed to Render
+
+	if config[9].on and self.draw_target then
+
+		local name = self.target.vehicle:GetName()
+		local model = self.target.vehicle:GetModelId()
+		local center = Render:WorldToScreen(target_position + self.target.vehicle:GetAngle() * Vector3.Up * 2)
 		
-			local name = self.target.vehicle:GetName()
-			local model = self.target.vehicle:GetModelId()
-			local center = Render:WorldToScreen(target_position + self.target.vehicle:GetAngle() * Vector3.Up * 2)
-			
-			local n = Render.Height * self.text_scale
-			local m = 0.75 * n
-			
-			Render:DrawLine(center + Vector2(-n, -m), center + Vector2(-n,  m), self.color[1])
-			Render:DrawLine(center + Vector2(-m,  n), center + Vector2( m,  n), self.color[1])
-			Render:DrawLine(center + Vector2( n,  m), center + Vector2( n, -m), self.color[1])
-			Render:DrawLine(center + Vector2( m, -n), center + Vector2(-m, -n), self.color[1])
-			
-			local distance_string = string.format("%i%s", distance * units.distance[settings.distance][2], units.distance[settings.distance][1])
-			Render:DrawText(center + Vector2(n * 1.25, -0.3 * Render:GetTextHeight(distance_string, 1.2 * self.text_size)), distance_string, self.color[1], 1.2 * self.text_size)
-			
-		end
+		local n = Render.Height * self.text_scale
+		local m = 0.75 * n
 		
+		Render:DrawLine(center + Vector2(-n, -m), center + Vector2(-n,  m), self.color[1])
+		Render:DrawLine(center + Vector2(-m,  n), center + Vector2( m,  n), self.color[1])
+		Render:DrawLine(center + Vector2( n,  m), center + Vector2( n, -m), self.color[1])
+		Render:DrawLine(center + Vector2( m, -n), center + Vector2(-m, -n), self.color[1])
+		
+		local distance_string = string.format("%i%s", distance * units.distance[settings.distance][2], units.distance[settings.distance][1])
+		Render:DrawText(center + Vector2(n * 1.25, -0.3 * Render:GetTextHeight(distance_string, 1.2 * self.text_size)), distance_string, self.color[1], 1.2 * self.text_size)	
+	
 	end
 
 end
