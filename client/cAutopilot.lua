@@ -21,8 +21,6 @@ function Autopilot:__init()
 			self.model = model
 		end
 	end
-	
-	if self.vehicle then self.panel_available = true else self.panel_available = false end
 
 	self:InitGUI()
 	
@@ -398,18 +396,18 @@ function Autopilot:PanelOpen(args) -- Subscribed to KeyUp
 
 	if self.two_keys then
 	
-		if args.key == string.byte(self.panel_toggle_button) and self.panel_available then
+		if args.key == string.byte(self.panel_toggle_button) and self.vehicle then
 			self.gui.window:SetVisible(not self.gui.window:GetVisible())
 			self:STOff()
 		end
 		
-		if args.key == string.byte(self.mouse_toggle_button) and self.panel_available then
+		if args.key == string.byte(self.mouse_toggle_button) and self.vehicle then
 			Mouse:SetVisible(not Mouse:GetVisible())
 		end
 		
 	else
 	
-		if args.key == string.byte(self.panel_toggle_button) and self.panel_available then
+		if args.key == string.byte(self.panel_toggle_button) and self.vehicle then
 			self.gui.window:SetVisible(not self.gui.window:GetVisible())
 			self:STOff()
 			Mouse:SetVisible(self.gui.window:GetVisible())
@@ -420,7 +418,9 @@ function Autopilot:PanelOpen(args) -- Subscribed to KeyUp
 end
 
 function Autopilot:InputBlock(args) -- Subscribed to LocalPlayerInput
+
 	local i = args.input
+
 	if Mouse:GetVisible() then
 		if i == 3 or i == 4 or i == 5 or i == 6 or i == 138 or i == 139 then
 			return false
@@ -441,14 +441,17 @@ function Autopilot:InputBlock(args) -- Subscribed to LocalPlayerInput
 			return false
 		end
 	end
+
 end
 
 function Autopilot:ResolutionChange() -- Subscribe to ResolutionChange
+
 	self.gui.window:SetSizeRel(self.gui.size)
 	self.gui.window:SetPositionRel(self.gui.position)
 	self.gui.st.window:SetSize(self.gui.window:GetSize())
 	self.gui.st.window:SetPosition(self.gui.window:GetPosition() + Vector2(0, self.gui.window:GetHeight()))
 	self:WindowResize()
+
 end
 	
 function Autopilot:WindowResize() -- Subscribed to ModuleLoad and Window Resize
@@ -575,7 +578,6 @@ function Autopilot:EnterPlane(args)
 		local model = args.vehicle:GetModelId()
 		if planes[model] and planes[model].available then
 			self:APOff()
-			self.panel_available = true
 			self.vehicle = args.vehicle
 			self.model = model
 		end
@@ -585,44 +587,41 @@ end
 
 function Autopilot:ExitPlane(args)
 
-	if self.panel_available then
-		self:Disable()
-	end
+	if self.vehicle then self:Disable() end
 
 end
 
 function Autopilot:PlaneDespawn(args)
 
-	if args.entity.__type == "Vehicle" then
-		if self.vehicle and self.vehicle == args.entity then
-			self:Disable()
-		end
+	if args.entity.__type == "Vehicle" and self.vehicle and self.vehicle == args.entity then
+		self:Disable()
 	end
 
 end
 
 function Autopilot:Disable()
+
 	self:APOff()
-	self.panel_available = false
 	self.vehicle = nil
 	self.model = nil
 	self.gui.window:SetVisible(false)
 	self.gui.st.window:SetVisible(false)
 	Mouse:SetVisible(false)
+
 end
 
-function Autopilot:Input() -- Subsciribed to InputPoll
+function Autopilot:Input() -- Subscribed to InputPoll
 
-	if not self.panel_available or not IsValid(self.vehicle) or Game:GetState() ~= GUIState.Game then return end	
+	if Game:GetState() ~= GUIState.Game or not IsValid(self.vehicle) then return end
 
 	if config[2].on then self:RollHold() end
 	if config[3].on then self:PitchHold() end
 	if config[4].on then self:HeadingHold() end
 	if config[5].on then self:AltitudeHold() end
 	if config[6].on then self:SpeedHold() end
-	if config[7].on then self:WayPointHold() end
+	if config[7].on then self:WaypointHold() end
 	if config[8].on then self:ApproachHold() end
-	if config[9].on then self:Targethold() end
+	if config[9].on then self:TargetHold() end
 
 end
 
@@ -644,20 +643,20 @@ end
 function Autopilot:PitchHold()
 	
 	local pitch = self.vehicle:GetPitch()
-	local roll = self.vehicle:GetRoll()
-	
+
 	local input = math.abs(pitch - config[3].setting) * config[3].gain
 	if input > config[3].input then input = config[3].input end
 	
 	-- Deactivates if the plane is banked too far left or right.
+	local abs_roll = math.abs(self.vehicle:GetRoll())
 	
-	if math.abs(roll) < 60 then
+	if abs_roll < 60 then
 		if config[3].setting > pitch then
 			Input:SetValue(Action.PlanePitchUp, input)
 		elseif config[3].setting < pitch then
 			Input:SetValue(Action.PlanePitchDown, input)
 		end
-	elseif math.abs(roll) > 120 then
+	elseif abs_roll > 120 then
 		if config[3].setting > pitch then
 			Input:SetValue(Action.PlanePitchDown, input)
 		elseif config[3].setting < pitch then
@@ -671,9 +670,7 @@ function Autopilot:HeadingHold()
 	
 	local heading = self.vehicle:GetHeading()
 	
-	local diff = DegreesDifference(config[4].setting, heading)
-	
-	config[2].setting = diff * config[4].gain
+	config[2].setting = DegreesDifference(config[4].setting, heading) * config[4].gain
 	
 	if config[2].setting > config[4].input then
 		config[2].setting = config[4].input
@@ -811,7 +808,7 @@ end
 
 function Autopilot:DrawApproach() -- Subscribed to GameRender
 
-	if config[8].on and self.draw_approach then
+	if config[8].on and self.draw_approach and self.approach then
 	
 		Render:DrawLine(self.approach.near_marker, self.approach.near_marker + self.approach.angle * Vector3.Forward * self.approach.glide_length, self.color[1])
 		Render:DrawLine(self.approach.near_marker, self.approach.near_marker + self.approach.angle * self.approach.sweep_yaw * Vector3.Forward * self.approach.glide_length, Color.Cyan)
@@ -873,15 +870,14 @@ function Autopilot:TargetHold()
 			return self:THOff()
 		end
 		
-		local target_position = self.target.vehicle:GetPosition()
-		local position = LocalPlayer:GetPosition()
-		local distance = Vector3.Distance(target_position, position)
-		local bias = distance / self.target.follow_distance
+		self.target.position = self.target.vehicle:GetPosition()
+		self.target.distance = Vector3.Distance(self.target.position, LocalPlayer:GetPosition())
+		local bias = self.target.distance / self.target.follow_distance
 		
 		config[6].setting = math.clamp(bias * self.target.vehicle:GetLinearVelocity():Length() * 3.6, config[6].min_setting, config[6].max_setting)
 		
-		self:FollowTargetXZ(target_position)
-		self:FollowTargetY(target_position)
+		self:FollowTargetXZ(self.target.position)
+		self:FollowTargetY(self.target.position)
 		
 	end
 
@@ -889,11 +885,11 @@ end
 
 function Autopilot:DrawTarget() -- Subscribed to Render
 
-	if config[9].on and self.draw_target then
+	if config[9].on and self.draw_target and self.target and IsValid(self.target.vehicle) then
 
 		local name = self.target.vehicle:GetName()
 		local model = self.target.vehicle:GetModelId()
-		local center = Render:WorldToScreen(target_position + self.target.vehicle:GetAngle() * Vector3.Up * 2)
+		local center = Render:WorldToScreen(self.target.position + self.target.vehicle:GetAngle() * Vector3.Up * 2)
 		
 		local n = Render.Height * self.text_scale
 		local m = 0.75 * n
@@ -903,7 +899,7 @@ function Autopilot:DrawTarget() -- Subscribed to Render
 		Render:DrawLine(center + Vector2( n,  m), center + Vector2( n, -m), self.color[1])
 		Render:DrawLine(center + Vector2( m, -n), center + Vector2(-m, -n), self.color[1])
 		
-		local distance_string = string.format("%i%s", distance * units.distance[settings.distance][2], units.distance[settings.distance][1])
+		local distance_string = string.format("%i%s", self.target.distance * units.distance[settings.distance][2], units.distance[settings.distance][1])
 		Render:DrawText(center + Vector2(n * 1.25, -0.3 * Render:GetTextHeight(distance_string, 1.2 * self.text_size)), distance_string, self.color[1], 1.2 * self.text_size)	
 	
 	end
