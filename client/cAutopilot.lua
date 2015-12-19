@@ -1,15 +1,13 @@
--- Written by Sinister Rectus - http://www.jc-mp.com/forums/index.php?action=profile;u=73431
-
 class 'Autopilot'
 
 function Autopilot:__init()
 
-	self.color = {Color.Orange, Color.Silver} -- Color scheme
+	self.colors = {Color.Orange, Color.Silver} -- Color scheme
 	
 	self.draw_target = true -- Whether to draw a target indicator for target-hold		
 	self.draw_approach = true -- Whether to draw a path for approach-hold
 		
-	self.two_keys = false -- If false then Z toggles both the panel and mouse
+	self.two_keys = false -- If false then panel toggle button toggles both the panel and mouse
 	self.panel_toggle_button = "Z"
 	self.mouse_toggle_button = "M"
 	
@@ -72,18 +70,18 @@ function Autopilot:InitGUI()
 	self.gui.st.window:SetVisible(false)
 	self.gui.st.window:SetClosable(false)
 	
-	for k in pairs(units) do
+	for k in pairs(units) do -- Units settings
 		if #units[k] > 1 then
 			self.gui.st[k] = {}
 			self.gui.st[k].label = Label.Create(self.gui.st.window)
 			self.gui.st[k].label:SetText(k:sub(1,1):upper()..k:sub(2))
-			for i,v in ipairs(units[k]) do
+			for i, v in ipairs(units[k]) do
 				self.gui.st[k][i] = LabeledRadioButton.Create(self.gui.st.window)
 				self.gui.st[k][i]:GetLabel():SetText(v[1])
 				self.gui.st[k][i]:GetLabel():SetMouseInputEnabled(false)
 				self.gui.st[k][i]:GetRadioButton():Subscribe("Checked", function(args)
 					settings[k] = i
-					for _,w in ipairs(self.gui.st[k]) do
+					for _, w in ipairs(self.gui.st[k]) do
 						if w ~= self.gui.st[k][i] then
 							w:GetRadioButton():SetChecked(false)
 						end
@@ -106,7 +104,7 @@ function Autopilot:InitGUI()
 	
 	self.gui.ap = {}
 		
-	for i = 1,#config do
+	for i in ipairs(config) do -- Main GUI window
 	
 		table.insert(self.gui.ap, {})
 		local v = self.gui.ap[#self.gui.ap]
@@ -114,7 +112,7 @@ function Autopilot:InitGUI()
 		v.button = Button.Create(self.gui.window)
 		v.button:SetText(config[i].name)
 		v.button:SetToggleable(true)
-		v.button:SetTextPressedColor(self.color[1])
+		v.button:SetTextPressedColor(self.colors[1])
 		
 		if config[i].setting then
 			
@@ -127,7 +125,7 @@ function Autopilot:InitGUI()
 			
 			if config[i].step then
 				v.slider:SetClampToNotches(true)
-				v.slider:SetNotchCount((config[i].max_setting-config[i].min_setting)/config[i].step)
+				v.slider:SetNotchCount((config[i].max_setting-config[i].min_setting) / config[i].step)
 			end
 			
 			v.inc = Button.Create(self.gui.window)
@@ -205,27 +203,27 @@ function Autopilot:InitGUI()
 
 end
 
-function Autopilot:RHQuick(args)
+function Autopilot:RHQuick()
 	config[2].setting = 0
 	self:RHOn()
 end
 
-function Autopilot:PHQuick(args)
+function Autopilot:PHQuick()
 	config[3].setting = 0
 	self:PHOn()
 end
 
-function Autopilot:HHQuick(args)
+function Autopilot:HHQuick()
 	config[4].setting = self.vehicle:GetHeading()
 	self:HHOn()
 end
 
-function Autopilot:AHQuick(args)
+function Autopilot:AHQuick()
 	config[5].setting = self.vehicle:GetAltitude()
 	self:AHOn()
 end
 
-function Autopilot:SHQuick(args)
+function Autopilot:SHQuick()
 	config[6].setting = planes[self.model].cruise_speed
 	self:SHOn()
 end
@@ -277,7 +275,7 @@ function Autopilot:WHOn()
 		self:HHOn()
 		config[7].on = true
 	else
-		Chat:Print("Waypoint not set.", self.color[2])
+		Chat:Print("Waypoint not set.", self.colors[2])
 	end
 end
 
@@ -289,7 +287,7 @@ function Autopilot:OHOn()
 	config[8].on = true
 	self.scanning = true
 	self.approach_timer = Timer()
-	Chat:Print("Scanning for runways...", self.color[2])
+	Chat:Print("Scanning for runways...", self.colors[2])
 end
 
 function Autopilot:THOn()
@@ -300,7 +298,7 @@ function Autopilot:THOn()
 	config[9].on = true
 	self.scanning = true
 	self.target_timer = Timer()
-	Chat:Print("Scanning for targets...", self.color[2])
+	Chat:Print("Scanning for targets...", self.colors[2])
 end
 
 function Autopilot:STOn()
@@ -460,7 +458,7 @@ function Autopilot:WindowResize() -- Subscribed to ModuleLoad and Window Resize
 
 	self.text_size = window_size:Length() * self.text_scale
 	
-	for i = 1,6 do
+	for i = 1, 6 do
 		self.gui.ap[i].button:SetPositionRel(self.gui.button_position * (i-1))
 	end
 	
@@ -472,7 +470,7 @@ function Autopilot:WindowResize() -- Subscribed to ModuleLoad and Window Resize
 	self.gui.line:SetPositionRel(self.gui.button_position * 6.35)
 	self.gui.line:SetSizeRel(Vector2(window_size.x, self.gui.button_size.y * 0.2))
 	
-	for i,v in pairs(self.gui.ap) do
+	for i, v in pairs(self.gui.ap) do
 
 		v.button:SetSizeRel(self.gui.button_size)
 		v.button:SetTextSize(self.text_size)
@@ -513,7 +511,7 @@ function Autopilot:WindowResize() -- Subscribed to ModuleLoad and Window Resize
 	self.gui.st.distance.label:SetPositionRel(Vector2(column1, 0.08))
 	self.gui.st.distance.label:SetTextSize(self.text_size)
 	self.gui.st.distance.label:SizeToContents()
-	for i,v in ipairs(self.gui.st.distance) do
+	for i, v in ipairs(self.gui.st.distance) do
 		v:SetPositionRel(Vector2(column1, 0.2 + (i - 1) * 0.1))
 		v:GetLabel():SetTextSize(self.text_size)
 		v:GetLabel():SizeToContents()
@@ -522,13 +520,13 @@ function Autopilot:WindowResize() -- Subscribed to ModuleLoad and Window Resize
 	self.gui.st.speed.label:SetPositionRel(Vector2(column2, 0.08))
 	self.gui.st.speed.label:SetTextSize(self.text_size)
 	self.gui.st.speed.label:SizeToContents()
-	for i,v in ipairs(self.gui.st.speed) do
+	for i, v in ipairs(self.gui.st.speed) do
 		v:SetPositionRel(Vector2(column2, 0.2 + (i - 1) * 0.1))
 		v:GetLabel():SetTextSize(self.text_size)
 		v:GetLabel():SizeToContents()
 	end
 	
-	for i,v in ipairs(self.gui.st.ap) do
+	for i, v in ipairs(self.gui.st.ap) do
 		v:SetPositionRel(Vector2(column3, 0.2 + (i - 1) * 0.1 + 0.02))
 		v:SetTextSize(self.text_size)
 		v:SizeToContents()
@@ -538,7 +536,7 @@ function Autopilot:WindowResize() -- Subscribed to ModuleLoad and Window Resize
 	self.gui.st.ap.gain.label:SetTextSize(self.text_size)
 	self.gui.st.ap.gain.label:SizeToContents()
 	
-	for i,v in ipairs(self.gui.st.ap.gain) do
+	for i, v in ipairs(self.gui.st.ap.gain) do
 		v:SetPositionRel(Vector2(column4, 0.2 + (i - 1) * 0.1))
 		v:SetTextSize(self.text_size)
 		v:SetWidth(self.text_size * 3)
@@ -549,7 +547,7 @@ function Autopilot:WindowResize() -- Subscribed to ModuleLoad and Window Resize
 	self.gui.st.ap.input.label:SetTextSize(self.text_size)
 	self.gui.st.ap.input.label:SizeToContents()
 	
-	for i,v in pairs(self.gui.st.ap.input) do
+	for i, v in pairs(self.gui.st.ap.input) do
 		if type(i) == "number" then
 			v:SetPositionRel(Vector2(column5, 0.2 + (i - 1) * 0.1))
 			v:SetTextSize(self.text_size)
@@ -562,7 +560,7 @@ end
 
 function Autopilot:WindowUpdate() -- Subscribed to Window Render
 
-	for k,v in pairs(self.gui.ap) do
+	for k, v in pairs(self.gui.ap) do
 		v.button:SetToggleState(config[k].on)
 		if config[k].setting then
 			v.label:SetText(string.format("%i%s", config[k].setting * units[config[k].units][settings[config[k].units]][2], units[config[k].units][settings[config[k].units]][1]))
@@ -762,12 +760,13 @@ function Autopilot:ApproachHold()
 			self:AHOn()
 			self:SHOn()
 			self.approach = {}
-			Chat:Print("Approach to "..airport_name.." RWY"..runway_name.." set.", self.color[1])
+			Chat:Print("Approach to "..airport_name.." RWY"..runway_name.." set.", self.colors[1])
 			self.approach.near_marker = airports[airport_name][runway_name].near_marker
 			self.approach.far_marker = airports[airport_name][runway_name].far_marker
 			self.approach.angle = Angle(math.rad(HeadingToYaw(runway_direction)), math.rad(airports[airport_name][runway_name].glide_pitch), 0)
 			self.approach.sweep_yaw = Angle(math.rad(airports[airport_name][runway_name].cone_angle / 2), 0, 0)
 			self.approach.glide_length = airports[airport_name][runway_name].glide_length
+			-- self.approach.glide_pitch = airports[airport_name][runway_name].glide_pitch
 			self.flare = nil
 		end
 		
@@ -810,7 +809,7 @@ function Autopilot:DrawApproach() -- Subscribed to GameRender
 
 	if config[8].on and self.draw_approach and self.approach then
 	
-		Render:DrawLine(self.approach.near_marker, self.approach.near_marker + self.approach.angle * Vector3.Forward * self.approach.glide_length, self.color[1])
+		Render:DrawLine(self.approach.near_marker, self.approach.near_marker + self.approach.angle * Vector3.Forward * self.approach.glide_length, self.colors[1])
 		Render:DrawLine(self.approach.near_marker, self.approach.near_marker + self.approach.angle * self.approach.sweep_yaw * Vector3.Forward * self.approach.glide_length, Color.Cyan)
 		Render:DrawLine(self.approach.near_marker, self.approach.near_marker + self.approach.angle * -self.approach.sweep_yaw * Vector3.Forward * self.approach.glide_length, Color.Cyan)
 	
@@ -850,7 +849,7 @@ function Autopilot:TargetHold()
 		
 		if nearest_target then
 			self.scanning = nil
-			Chat:Print("Target acquired: "..tostring(nearest_target:GetDriver()), self.color[1])
+			Chat:Print("Target acquired: "..tostring(nearest_target:GetDriver()), self.colors[1])
 			self.target = {}
 			self.target.vehicle = nearest_target
 			self.target.follow_distance = 100
@@ -866,7 +865,7 @@ function Autopilot:TargetHold()
 	if self.target then
 	
 		if not IsValid(self.target.vehicle) or not self.target.vehicle:GetDriver() then
-			Chat:Print("Target lost.", self.color[1])
+			Chat:Print("Target lost.", self.colors[1])
 			return self:THOff()
 		end
 		
@@ -894,13 +893,13 @@ function Autopilot:DrawTarget() -- Subscribed to Render
 		local n = Render.Height * self.text_scale
 		local m = 0.75 * n
 		
-		Render:DrawLine(center + Vector2(-n, -m), center + Vector2(-n,  m), self.color[1])
-		Render:DrawLine(center + Vector2(-m,  n), center + Vector2( m,  n), self.color[1])
-		Render:DrawLine(center + Vector2( n,  m), center + Vector2( n, -m), self.color[1])
-		Render:DrawLine(center + Vector2( m, -n), center + Vector2(-m, -n), self.color[1])
+		Render:DrawLine(center + Vector2(-n, -m), center + Vector2(-n,  m), self.colors[1])
+		Render:DrawLine(center + Vector2(-m,  n), center + Vector2( m,  n), self.colors[1])
+		Render:DrawLine(center + Vector2( n,  m), center + Vector2( n, -m), self.colors[1])
+		Render:DrawLine(center + Vector2( m, -n), center + Vector2(-m, -n), self.colors[1])
 		
 		local distance_string = string.format("%i%s", self.target.distance * units.distance[settings.distance][2], units.distance[settings.distance][1])
-		Render:DrawText(center + Vector2(n * 1.25, -0.3 * Render:GetTextHeight(distance_string, 1.2 * self.text_size)), distance_string, self.color[1], 1.2 * self.text_size)	
+		Render:DrawText(center + Vector2(n * 1.25, -0.3 * Render:GetTextHeight(distance_string, 1.2 * self.text_size)), distance_string, self.colors[1], 1.2 * self.text_size)	
 	
 	end
 
