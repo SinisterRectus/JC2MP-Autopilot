@@ -17,7 +17,7 @@ units = {
 		{" kts", 0.540} -- 5
 	},
 	["angle"] = { -- Do not change these
-		{"°", 1}, -- 1
+		{"°", 1} -- 1
 	}
 }
 
@@ -230,7 +230,7 @@ airports = {
 			["near_marker"] = Vector3(-12238.39, 610.94, 4664.57),
 			["far_marker"] = Vector3(-11970.58, 610.94, 4162.33),
 			["glide_length"] = 5000,
-			["glide_pitch"] = 6,
+			["glide_pitch"] = 5,
 			["cone_angle"] = 10
 		},
 		["21R"] = {
@@ -244,7 +244,7 @@ airports = {
 			["near_marker"] = Vector3(-12101.96, 611.10, 4737.54),
 			["far_marker"] = Vector3(-11834.03, 611.10, 4236.06),
 			["glide_length"] = 5000,
-			["glide_pitch"] = 6,
+			["glide_pitch"] = 5,
 			["cone_angle"] = 10
 		},
 		["21L"] = {
@@ -322,14 +322,14 @@ airports = {
 			["near_marker"] = Vector3(-160.40, 295.36, 7089.45),
 			["far_marker"] = Vector3(-351.18, 295.36, 7060.66),
 			["glide_length"] = 5000,
-			["glide_pitch"] = 6,
+			["glide_pitch"] = 5,
 			["cone_angle"] = 6
 		},
 		["28L"] = {
 			["near_marker"] = Vector3(-169.66, 295.35, 7148.39),
 			["far_marker"] = Vector3(-358.35, 295.35, 7119.41),
 			["glide_length"] = 5000,
-			["glide_pitch"] = 6,
+			["glide_pitch"] = 5,
 			["cone_angle"] = 6
 		}
 	},
@@ -447,19 +447,11 @@ function OppositeDegrees(theta)
 end
 
 function YawToHeading(yaw)
-	if yaw < 0 then
-		return -yaw
-	else
-		return 360 - yaw
-	end
+	return yaw < 0 and -yaw or 360 - yaw
 end
 
 function HeadingToYaw(heading)
-	if heading < 180 then
-		return -heading
-	else
-		return 360 - heading
-	end
+	return heading < 180 and -heading or 360 - heading
 end
 
 function Vehicle:GetRoll()
@@ -479,7 +471,7 @@ function Vehicle:GetHeading()
 end
 
 function Vehicle:GetAltitude()
-	return (self:GetPosition().y - 200)
+	return self:GetPosition().y - 200
 end
 
 function Vehicle:GetAirSpeed()
@@ -491,5 +483,6 @@ function Vehicle:GetVerticalSpeed()
 end
 
 function Vehicle:GetGroundSpeed()
-	return Vector2(self:GetLinearVelocity().x, self:GetLinearVelocity().z):Length() * 3.6
+	local velocity = self:GetLinearVelocity()
+	return Vector2(velocity.x, velocity.z):Length() * 3.6
 end
