@@ -21,7 +21,7 @@ units = {
 	}
 }
 
-config = { 
+config = {
 	[1] = {
 		["name"] = "Autopilot",
 		["on"] = false
@@ -37,7 +37,7 @@ config = {
 		["input"] = 0.7, -- Percentage from 0 to 1
 		["quick"] = "Zero"
 	},
-	[3] = {			
+	[3] = {
 		["name"] = "Pitch",
 		["on"] = false,
 		["setting"] = 0,
@@ -48,7 +48,7 @@ config = {
 		["input"] = 0.8, -- Percentage from 0 to 1
 		["quick"] = "Zero"
 	},
-	[4] = {			
+	[4] = {
 		["name"] = "Heading",
 		["on"] = false,
 		["setting"] = 0,
@@ -189,7 +189,7 @@ airports = {
 	["PIA"] = {
 		["27"] = {
 			["near_marker"] = Vector3(-5842.51, 208.97, -3009.23),
-			["far_marker"] = Vector3(-6816.68, 208.97, -2994.51),				
+			["far_marker"] = Vector3(-6816.68, 208.97, -2994.51),
 			["glide_length"] = 4000,
 			["glide_pitch"] = 3,
 			["cone_angle"] = 15
@@ -281,7 +281,7 @@ airports = {
 	["Kem Udara Wau Pantas"] = {
 		["27"] = {
 			["near_marker"] = Vector3(6140.61, 251.00, 7158.83),
-			["far_marker"] = Vector3(5573.50, 251.00, 7158.61),				
+			["far_marker"] = Vector3(5573.50, 251.00, 7158.61),
 			["glide_length"] = 5000,
 			["glide_pitch"] = 3,
 			["cone_angle"] = 15
@@ -306,7 +306,7 @@ airports = {
 			["glide_length"] = 1500,
 			["glide_pitch"] = 3,
 			["cone_angle"] = 15
-		}		
+		}
 	},
 	["Pulau Dongeng"] = {
 		["12"] = {
@@ -370,21 +370,21 @@ airports = {
 	["Sungai Cengkih Besar"] = {
 		["20"] = {
 			["near_marker"] = Vector3(4706.35, 208.40, -10989.74),
-			["far_marker"] = Vector3(4477.04, 208.40, -10467.98),				
+			["far_marker"] = Vector3(4477.04, 208.40, -10467.98),
 			["glide_length"] = 5000,
 			["glide_pitch"] = 3,
 			["cone_angle"] = 15
 		},
 		["29"] = {
 			["near_marker"] = Vector3(4667.72, 208.44, -10624.48),
-			["far_marker"] = Vector3(4147.00, 208.44, -10853.32),				
+			["far_marker"] = Vector3(4147.00, 208.44, -10853.32),
 			["glide_length"] = 5000,
 			["glide_pitch"] = 3,
 			["cone_angle"] = 15
 		},
 		["11"] = {
 			["near_marker"] = Vector3(4147.00, 208.44, -10853.32),
-			["far_marker"] = Vector3(4667.72, 208.44, -10624.48),				
+			["far_marker"] = Vector3(4667.72, 208.44, -10624.48),
 			["glide_length"] = 5000,
 			["glide_pitch"] = 3,
 			["cone_angle"] = 15
@@ -393,7 +393,7 @@ airports = {
 	["Paya Luas"] = {
 		["27"] = {
 			["near_marker"] = Vector3(12011.65, 206.88, -10715.07),
-			["far_marker"] = Vector3(11440.75, 206.88, -10715.09),				
+			["far_marker"] = Vector3(11440.75, 206.88, -10715.09),
 			["glide_length"] = 5000,
 			["glide_pitch"] = 3,
 			["cone_angle"] = 15
@@ -418,7 +418,7 @@ airports = {
 			["glide_length"] = 1500,
 			["glide_pitch"] = 3,
 			["cone_angle"] = 15
-		}			
+		}
 	},
 	["Lemabah Delima"] = {
 		["13"] = {
@@ -438,6 +438,8 @@ airports = {
 	}
 }
 
+local deg = math.deg
+
 function DegreesDifference(theta1, theta2)
 	return (theta2 - theta1 + 180) % 360 - 180
 end
@@ -455,15 +457,15 @@ function HeadingToYaw(heading)
 end
 
 function Vehicle:GetRoll()
-	return math.deg(self:GetAngle().roll)
+	return deg(self:GetAngle().roll)
 end
 
 function Vehicle:GetPitch()
-	return math.deg(self:GetAngle().pitch)
+	return deg(self:GetAngle().pitch)
 end
 
 function Vehicle:GetYaw()
-	return math.deg(self:GetAngle().yaw)
+	return deg(self:GetAngle().yaw)
 end
 
 function Vehicle:GetHeading()
